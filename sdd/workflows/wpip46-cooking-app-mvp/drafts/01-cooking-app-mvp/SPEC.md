@@ -46,10 +46,18 @@ Greenfield project — no existing codebase beyond the SDD scaffolding.
 - FR-22: Initial admin user is seeded via a database seed script (your account)
 
 ### Recipe CRUD
-- FR-6: Authenticated users can create a recipe with: title, description, ingredients, steps, prep time, cook time, servings, image, tags
-- FR-7: Authenticated users can edit their own recipes
-- FR-8: Authenticated users can delete their own recipes
-- FR-9: All recipes are publicly visible (no private recipes)
+- FR-6: Authenticated users can create a recipe with: title, description (markdown), ingredients, steps (markdown), prep time, cook time, servings, image, tags
+- FR-7: Description and steps fields support markdown, edited via a lightweight markdown editor with syntax highlighting and a preview pane
+- FR-8: Markdown content is rendered as HTML on recipe detail pages
+- FR-9: Authenticated users can edit their own recipes
+- FR-10: Authenticated users can delete their own recipes
+- FR-11: All recipes are publicly visible (no private recipes)
+
+### Ingredients System
+- FR-23: Ingredients are stored in a shared `ingredients` collection (global to all users)
+- FR-24: When adding ingredients to a recipe, users search existing ingredients via an autocomplete/select component (react-select style)
+- FR-25: If an ingredient doesn't exist, users can create it inline from the same component
+- FR-26: Recipe ingredients reference the shared ingredient record plus amount and unit
 
 ### Browsing & Discovery
 - FR-10: All users (including unauthenticated) can browse recipes
@@ -125,14 +133,22 @@ Next.js App Router full-stack application deployed on Vercel:
 | usedAt | Date | null until signup completes, then set to signup timestamp |
 | createdAt | Date | When the invite was created |
 
+#### Ingredient (shared collection)
+| Field | Type | Description |
+|-------|------|-------------|
+| _id | ObjectId | Primary key |
+| name | string | Ingredient name (unique, indexed, stored lowercase for dedup) |
+| createdBy | ObjectId | Reference to User who first added it |
+| createdAt | Date | Creation timestamp |
+
 #### Recipe
 | Field | Type | Description |
 |-------|------|-------------|
 | _id | ObjectId | Primary key |
 | title | string | Recipe title |
-| description | string | Short description |
-| ingredients | array of { item: string, amount: string, unit: string } | Ingredient list |
-| steps | array of { order: number, instruction: string } | Ordered instructions |
+| description | string | Markdown content — rendered as HTML on display |
+| ingredients | array of { ingredientId: ObjectId, amount: string, unit: string } | References to Ingredient collection + quantity |
+| steps | string | Markdown content — rendered as HTML on display |
 | prepTime | number | Minutes |
 | cookTime | number | Minutes |
 | servings | number | Number of servings |
@@ -166,6 +182,10 @@ Compound unique index on (userId, recipeId).
 - `POST /api/recipes` — Create recipe (auth required)
 - `PUT /api/recipes/:id` — Update recipe (auth required, owner only)
 - `DELETE /api/recipes/:id` — Delete recipe (auth required, owner only)
+
+### Ingredients
+- `GET /api/ingredients?q=<search>` — Search ingredients by name prefix (auth required, for autocomplete)
+- `POST /api/ingredients` — Create a new ingredient (auth required)
 
 ### Invites (admin only)
 - `GET /api/invites` — List all invites (admin required)
@@ -239,7 +259,8 @@ Compound unique index on (userId, recipeId).
 |--------|-----------|--------|
 | User | A registered account that can create and save recipes (has role: admin or user) | New |
 | Invite | An email-based invitation that gates signup access | New |
-| Recipe | A cooking recipe with ingredients, steps, and metadata | New |
+| Ingredient | A shared ingredient record (e.g., "olive oil", "garlic") reusable across recipes | New |
+| Recipe | A cooking recipe with markdown description/steps, ingredient references, and metadata | New |
 | SavedRecipe | A join record linking a user to a favorited recipe | New |
 
 ### Relationships
@@ -249,6 +270,8 @@ User (admin) --creates--> Invite (1:many)
 Invite --gates--> User signup (1:1)
 User --creates--> Recipe (1:many)
 User --saves--> Recipe (many:many via SavedRecipe)
+Recipe --references--> Ingredient (many:many, with amount/unit per recipe)
+User --creates--> Ingredient (1:many, shared globally)
 ```
 
 ### Glossary
@@ -259,6 +282,7 @@ User --saves--> Recipe (many:many via SavedRecipe)
 | Saved Recipe | A recipe bookmarked by a user for quick access later |
 | Author | The user who created a recipe |
 | Tags | Categorical labels for organizing recipes (e.g., "dinner", "vegetarian") |
+| Ingredient | A named food item stored globally and reusable across recipes |
 | Invite | An admin-created record that allows a specific email to sign up |
 | Admin | A user with role "admin" who can manage invites (initially seeded) |
 
@@ -299,6 +323,9 @@ Note: Since this is a Next.js monolith on Vercel (not the tech pack's default Ku
 - shadcn/ui components
 - zod (validation)
 - bcrypt (password hashing)
+- react-markdown or similar (markdown rendering)
+- a lightweight markdown editor (e.g., @uiw/react-md-editor or similar with syntax highlighting + preview)
+- react-select (async creatable variant for ingredient autocomplete)
 
 ## Requirements Discovery
 
@@ -318,6 +345,8 @@ Note: Since this is a Next.js monolith on Vercel (not the tech pack's default Ku
 | 10 | Recipe visibility? | All recipes are public | User |
 | 11 | Should signup be open or restricted? | Invite-only — admin creates invites by email, signup checks invites collection | User |
 | 12 | How to identify admin? | role field on User model; initial admin seeded via script | User |
+| 13 | Description/steps formatting? | Markdown with lightweight editor (syntax highlighting + preview pane), rendered as HTML | User |
+| 14 | How should ingredients work? | Shared ingredients collection; autocomplete search via react-select; create inline if new | User |
 
 ### Open Questions (BLOCKING)
 
