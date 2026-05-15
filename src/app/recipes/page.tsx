@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { connectDB } from "@/lib/db";
 import { Recipe } from "@/models/Recipe";
 import { RecipeCard } from "@/components/recipes/recipe-card";
+
+export const metadata: Metadata = {
+  title: "Recipes | App Cooking",
+  description: "Browse and discover cooking recipes",
+};
 
 interface RecipesPageProps {
   searchParams: Promise<{ q?: string; tag?: string; page?: string }>;

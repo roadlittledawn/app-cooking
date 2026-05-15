@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
@@ -9,6 +10,24 @@ import { SavedRecipe } from "@/models/SavedRecipe";
 
 interface RecipePageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: RecipePageProps): Promise<Metadata> {
+  const { id } = await params;
+  await connectDB();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recipe: any = await Recipe.findById(id).lean();
+  if (!recipe) return { title: "Recipe Not Found" };
+
+  return {
+    title: `${recipe.title} | App Cooking`,
+    description: recipe.description?.slice(0, 160),
+    openGraph: {
+      title: recipe.title,
+      description: recipe.description?.slice(0, 160),
+      ...(recipe.image ? { images: [recipe.image] } : {}),
+    },
+  };
 }
 
 export default async function RecipePage({ params }: RecipePageProps) {
