@@ -137,6 +137,31 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
                 ...base,
                 minHeight: "34px",
                 fontSize: "0.875rem",
+                backgroundColor: "var(--card)",
+                borderColor: "var(--border)",
+                color: "var(--foreground)",
+              }),
+              menu: (base) => ({
+                ...base,
+                backgroundColor: "var(--card)",
+                borderColor: "var(--border)",
+              }),
+              option: (base, state) => ({
+                ...base,
+                backgroundColor: state.isFocused ? "var(--muted)" : "var(--card)",
+                color: "var(--foreground)",
+              }),
+              input: (base) => ({
+                ...base,
+                color: "var(--foreground)",
+              }),
+              placeholder: (base) => ({
+                ...base,
+                color: "var(--muted-foreground)",
+              }),
+              singleValue: (base) => ({
+                ...base,
+                color: "var(--foreground)",
               }),
             }}
           />
