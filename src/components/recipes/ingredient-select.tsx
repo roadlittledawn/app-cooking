@@ -84,7 +84,7 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
           {ingredients.map((ing, i) => (
             <li
               key={i}
-              className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-md"
+              className="flex items-center gap-2 bg-[var(--muted)] px-3 py-2 rounded-md"
             >
               <span className="flex-1">
                 {ing.amount} {ing.unit} — {ing.name}
@@ -103,7 +103,7 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
 
       <div className="flex gap-2 items-end">
         <div className="w-20">
-          <label className="block text-xs text-gray-500 mb-1">Amount</label>
+          <label className="block text-xs text-[var(--muted-foreground)] mb-1">Amount</label>
           <input
             type="text"
             value={currentAmount}
@@ -113,7 +113,7 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
           />
         </div>
         <div className="w-20">
-          <label className="block text-xs text-gray-500 mb-1">Unit</label>
+          <label className="block text-xs text-[var(--muted-foreground)] mb-1">Unit</label>
           <input
             type="text"
             value={currentUnit}
@@ -123,7 +123,7 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
           />
         </div>
         <div className="flex-1">
-          <label className="block text-xs text-gray-500 mb-1">Ingredient</label>
+          <label className="block text-xs text-[var(--muted-foreground)] mb-1">Ingredient</label>
           <AsyncCreatableSelect
             cacheOptions
             defaultOptions

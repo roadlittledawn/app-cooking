@@ -22,14 +22,14 @@ export function MarkdownEditor({
     <div>
       <label className="block text-sm font-medium mb-1">{label}</label>
       <div className="border rounded-md overflow-hidden">
-        <div className="flex border-b bg-gray-50">
+        <div className="flex border-b bg-[var(--muted)]">
           <button
             type="button"
             onClick={() => setTab("write")}
             className={`px-4 py-2 text-sm ${
               tab === "write"
-                ? "bg-white border-b-2 border-blue-500 font-medium"
-                : "text-gray-600 hover:text-gray-800"
+                ? "bg-[var(--background)] border-b-2 border-blue-500 font-medium"
+                : "text-[var(--muted-foreground)] hover:opacity-80"
             }`}
           >
             Write
@@ -39,8 +39,8 @@ export function MarkdownEditor({
             onClick={() => setTab("preview")}
             className={`px-4 py-2 text-sm ${
               tab === "preview"
-                ? "bg-white border-b-2 border-blue-500 font-medium"
-                : "text-gray-600 hover:text-gray-800"
+                ? "bg-[var(--background)] border-b-2 border-blue-500 font-medium"
+                : "text-[var(--muted-foreground)] hover:opacity-80"
             }`}
           >
             Preview
@@ -60,12 +60,12 @@ export function MarkdownEditor({
             {value ? (
               <ReactMarkdown>{value}</ReactMarkdown>
             ) : (
-              <p className="text-gray-400 italic">Nothing to preview</p>
+              <p className="text-[var(--muted-foreground)] italic">Nothing to preview</p>
             )}
           </div>
         )}
       </div>
-      <p className="text-xs text-gray-500 mt-1">Supports Markdown formatting</p>
+      <p className="text-xs text-[var(--muted-foreground)] mt-1">Supports Markdown formatting</p>
     </div>
   );
 }

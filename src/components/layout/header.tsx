@@ -32,7 +32,7 @@ export function Header() {
                 </Link>
               )}
               <div className="flex items-center gap-2 ml-2">
-                <span className="text-sm text-gray-600">
+                <span className="text-sm opacity-70">
                   {session.user.name}
                 </span>
                 <button

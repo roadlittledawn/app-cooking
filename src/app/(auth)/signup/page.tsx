@@ -53,14 +53,14 @@ export default function SignupPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold">Sign Up</h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-[var(--muted-foreground)]">
             Create your App Cooking account
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+            <div className="bg-red-500/10 text-red-400 p-3 rounded-md text-sm">
               {error}
             </div>
           )}
@@ -127,13 +127,13 @@ export default function SignupPage() {
                 <div className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                <span className="bg-[var(--background)] px-2 text-[var(--muted-foreground)]">Or continue with</span>
               </div>
             </div>
 
             <button
               onClick={() => signIn("google", { callbackUrl: "/" })}
-              className="w-full border border-gray-300 py-2 rounded-md hover:bg-gray-50 flex items-center justify-center gap-2"
+              className="w-full border py-2 rounded-md hover:opacity-80 flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -158,7 +158,7 @@ export default function SignupPage() {
           </>
         )}
 
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-sm text-[var(--muted-foreground)]">
           Already have an account?{" "}
           <Link href="/login" className="text-blue-600 hover:underline">
             Sign in

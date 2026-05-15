@@ -101,7 +101,7 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
       {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+        <div className="bg-red-500/10 text-red-400 p-3 rounded-md text-sm">
           {error}
         </div>
       )}
@@ -223,7 +223,7 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
           <button
             type="button"
             onClick={addTag}
-            className="border px-3 py-2 rounded-md text-sm hover:bg-gray-50"
+            className="border px-3 py-2 rounded-md text-sm hover:opacity-80"
           >
             Add
           </button>
