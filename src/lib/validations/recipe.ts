@@ -1,0 +1,24 @@
+import { z } from "zod";
+
+export const recipeIngredientSchema = z.object({
+  ingredientId: z.string().min(1),
+  amount: z.string().min(1, "Amount is required"),
+  unit: z.string().min(1, "Unit is required"),
+});
+
+export const createRecipeSchema = z.object({
+  title: z.string().min(1, "Title is required").max(200),
+  description: z.string().min(1, "Description is required"),
+  ingredients: z.array(recipeIngredientSchema).min(1, "At least one ingredient is required"),
+  steps: z.string().min(1, "Steps are required"),
+  prepTime: z.number().int().min(0),
+  cookTime: z.number().int().min(0),
+  servings: z.number().int().min(1),
+  image: z.string().url().nullable().optional(),
+  tags: z.array(z.string()).default([]),
+});
+
+export const updateRecipeSchema = createRecipeSchema.partial();
+
+export type CreateRecipeInput = z.infer<typeof createRecipeSchema>;
+export type UpdateRecipeInput = z.infer<typeof updateRecipeSchema>;
