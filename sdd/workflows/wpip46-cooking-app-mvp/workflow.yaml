@@ -1,0 +1,27 @@
+id: wpip46
+name: cooking-app-mvp
+source: interactive
+created_at: "2026-05-15T20:28:00Z"
+phase: spec
+step: spec_review
+
+items:
+  - change_id: cooking-app-mvp-1
+    id: 01-cooking-app-mvp
+    title: Cooking App MVP
+    type: feature
+    spec_status: ready_for_review
+    plan_status: pending
+    impl_status: pending
+    review_status: pending
+    location: changes/2026/05/15/wpip46-cooking-app-mvp/01-cooking-app-mvp
+    depends_on: []
+
+progress:
+  total_items: 1
+  specs_completed: 0
+  specs_pending: 1
+  plans_completed: 0
+  plans_pending: 1
+  implemented: 0
+  reviewed: 0
