@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import Editor from "react-simple-code-editor";
+import Prism from "prismjs";
+import "prismjs/components/prism-markdown";
+import "prismjs/themes/prism-tomorrow.css";
 
 interface MarkdownEditorProps {
   value: string;
@@ -17,6 +21,10 @@ export function MarkdownEditor({
   placeholder,
 }: MarkdownEditorProps) {
   const [tab, setTab] = useState<"write" | "preview">("write");
+
+  function highlight(code: string) {
+    return Prism.highlight(code, Prism.languages.markdown, "markdown");
+  }
 
   return (
     <div>
@@ -48,13 +56,26 @@ export function MarkdownEditor({
         </div>
 
         {tab === "write" ? (
-          <textarea
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
-            rows={12}
-            className="w-full px-3 py-2 font-mono text-sm resize-y focus:outline-none"
-          />
+          <div className="min-h-[300px] relative">
+            {!value && placeholder && (
+              <span className="absolute top-2 left-3 text-[var(--muted-foreground)] text-sm pointer-events-none">
+                {placeholder}
+              </span>
+            )}
+            <Editor
+              value={value}
+              onValueChange={onChange}
+              highlight={highlight}
+              padding={12}
+              style={{
+                fontFamily: "ui-monospace, monospace",
+                fontSize: "0.875rem",
+                minHeight: "300px",
+                backgroundColor: "var(--card)",
+                color: "var(--foreground)",
+              }}
+            />
+          </div>
         ) : (
           <div className="px-4 py-3 prose prose-sm max-w-none min-h-[200px]">
             {value ? (
