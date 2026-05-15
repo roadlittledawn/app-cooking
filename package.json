@@ -7,31 +7,32 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "npx tsx scripts/seed.ts"
+    "seed": "npx tsx scripts/seed.ts",
+    "reset-admin": "npx tsx scripts/reset-admin.ts"
   },
   "dependencies": {
+    "bcrypt": "^6",
+    "mongoose": "^8",
     "next": "16.2.6",
+    "next-auth": "5.0.0-beta.31",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "next-auth": "5.0.0-beta.31",
-    "mongoose": "^8",
-    "bcrypt": "^6",
-    "zod": "^3",
     "react-markdown": "^9",
     "react-select": "^5",
-    "@uiw/react-md-editor": "^4",
-    "rehype-sanitize": "^6"
+    "rehype-sanitize": "^6",
+    "zod": "^3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bcrypt": "^5",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/bcrypt": "^5",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "tsx": "^4"
+    "tsx": "^4",
+    "typescript": "^5"
   }
 }

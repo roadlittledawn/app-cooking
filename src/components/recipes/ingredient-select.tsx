@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import AsyncCreatableSelect from "react-select/async-creatable";
+import dynamic from "next/dynamic";
+
+const AsyncCreatableSelect = dynamic(
+  () => import("react-select/async-creatable"),
+  { ssr: false }
+);
 
 interface IngredientOption {
   value: string;
@@ -35,16 +40,17 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
     }));
   }
 
-  async function handleSelect(option: IngredientOption | null) {
-    if (!option || !currentAmount || !currentUnit) return;
+  async function handleSelect(option: unknown) {
+    const opt = option as IngredientOption | null;
+    if (!opt || !currentAmount || !currentUnit) return;
 
-    let ingredientId = option.value;
+    let ingredientId = opt.value;
 
-    if (option.__isNew__) {
+    if (opt.__isNew__) {
       const res = await fetch("/api/ingredients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: option.label }),
+        body: JSON.stringify({ name: opt.label }),
       });
       if (!res.ok) return;
       const created = await res.json();
@@ -55,7 +61,7 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
       ...ingredients,
       {
         ingredientId,
-        name: option.label,
+        name: opt.label,
         amount: currentAmount,
         unit: currentUnit,
       },

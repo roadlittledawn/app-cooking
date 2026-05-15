@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { connectDB } from "@/lib/db";
 import { Recipe } from "@/models/Recipe";
 import { RecipeForm } from "@/components/recipes/recipe-form";
@@ -8,6 +9,9 @@ interface EditRecipePageProps {
 }
 
 export default async function EditRecipePage({ params }: EditRecipePageProps) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
   const { id } = await params;
   await connectDB();
 
