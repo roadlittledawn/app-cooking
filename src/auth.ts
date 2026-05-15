@@ -8,7 +8,7 @@ import { Invite } from "@/models/Invite";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
-    Google,
+    ...(process.env.AUTH_GOOGLE_ID ? [Google] : []),
     Credentials({
       credentials: {
         email: {},
