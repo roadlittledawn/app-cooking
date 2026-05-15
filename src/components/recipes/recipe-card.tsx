@@ -26,7 +26,7 @@ export function RecipeCard({
       href={`/recipes/${id}`}
       className="block border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
     >
-      <div className="aspect-video bg-gray-100 relative">
+      <div className="aspect-video bg-[var(--muted)] relative">
         {image ? (
           <img
             src={image}
@@ -34,7 +34,7 @@ export function RecipeCard({
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
+          <div className="w-full h-full flex items-center justify-center text-[var(--muted-foreground)]">
             <svg
               className="w-12 h-12"
               fill="none"
@@ -53,8 +53,8 @@ export function RecipeCard({
       </div>
       <div className="p-4">
         <h3 className="font-semibold text-lg line-clamp-1">{title}</h3>
-        <p className="text-sm text-gray-500 mt-1">by {authorName}</p>
-        <div className="flex items-center gap-3 mt-2 text-sm text-gray-600">
+        <p className="text-sm text-[var(--muted-foreground)] mt-1">by {authorName}</p>
+        <div className="flex items-center gap-3 mt-2 text-sm text-[var(--muted-foreground)]">
           {totalTime > 0 && <span>{totalTime} min</span>}
         </div>
         {tags.length > 0 && (
@@ -62,7 +62,7 @@ export function RecipeCard({
             {tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="text-xs bg-gray-100 px-2 py-0.5 rounded-full"
+                className="text-xs bg-[var(--muted)] px-2 py-0.5 rounded-full"
               >
                 {tag}
               </span>

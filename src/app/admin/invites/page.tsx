@@ -95,13 +95,13 @@ export default function AdminInvitesPage() {
       <h2 className="text-lg font-semibold mb-3">Invitations</h2>
       <div className="border rounded-md divide-y">
         {invites.length === 0 && (
-          <p className="p-4 text-gray-500 text-sm">No invites yet.</p>
+          <p className="p-4 text-[var(--muted-foreground)] text-sm">No invites yet.</p>
         )}
         {invites.map((invite) => (
           <div key={invite._id} className="flex items-center justify-between p-4">
             <div>
               <p className="font-medium">{invite.email}</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-[var(--muted-foreground)]">
                 {invite.usedAt
                   ? `Used on ${new Date(invite.usedAt).toLocaleDateString()}`
                   : `Pending — invited ${new Date(invite.createdAt).toLocaleDateString()}`}

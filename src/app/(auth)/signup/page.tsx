@@ -106,7 +106,7 @@ export default function SignupPage() {
               minLength={8}
               className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-[var(--muted-foreground)] mt-1">
               Minimum 8 characters
             </p>
           </div>

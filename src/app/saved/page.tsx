@@ -23,7 +23,7 @@ export default async function SavedRecipesPage() {
       <h1 className="text-3xl font-bold mb-8">Saved Recipes</h1>
 
       {savedRecipes.length === 0 ? (
-        <p className="text-gray-500 text-center py-12">
+        <p className="text-[var(--muted-foreground)] text-center py-12">
           No saved recipes yet. Browse recipes and click the heart to save them!
         </p>
       ) : (

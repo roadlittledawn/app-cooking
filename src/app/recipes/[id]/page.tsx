@@ -65,7 +65,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
           {isOwner && (
             <Link
               href={`/recipes/${id}/edit`}
-              className="border px-3 py-1.5 rounded-md text-sm hover:bg-gray-50"
+              className="border px-3 py-1.5 rounded-md text-sm hover:bg-[var(--muted)]"
             >
               Edit
             </Link>
@@ -73,7 +73,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 text-sm text-gray-600 mb-6">
+      <div className="flex items-center gap-4 text-sm text-[var(--muted-foreground)] mb-6">
         <span>by {recipe.authorId?.name || "Unknown"}</span>
         {recipe.prepTime > 0 && <span>Prep: {recipe.prepTime} min</span>}
         {recipe.cookTime > 0 && <span>Cook: {recipe.cookTime} min</span>}
@@ -86,7 +86,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
             <Link
               key={tag}
               href={`/recipes?tag=${tag}`}
-              className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-md hover:bg-blue-200"
+              className="text-sm bg-blue-500/20 text-blue-400 px-2 py-1 rounded-md hover:bg-blue-500/30"
             >
               {tag}
             </Link>

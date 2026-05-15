@@ -56,14 +56,14 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
         />
         <button
           type="submit"
-          className="border px-4 py-2 rounded-md hover:bg-gray-50"
+          className="border px-4 py-2 rounded-md hover:bg-[var(--muted)]"
         >
           Search
         </button>
       </form>
 
       {recipes.length === 0 ? (
-        <p className="text-gray-500 text-center py-12">
+        <p className="text-[var(--muted-foreground)] text-center py-12">
           No recipes found. {q || tag ? "Try a different search." : "Create your first recipe!"}
         </p>
       ) : (
@@ -92,7 +92,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
               className={`px-3 py-1 rounded-md ${
                 p === currentPage
                   ? "bg-blue-600 text-white"
-                  : "border hover:bg-gray-50"
+                  : "border hover:bg-[var(--muted)]"
               }`}
             >
               {p}

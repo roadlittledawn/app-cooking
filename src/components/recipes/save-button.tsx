@@ -29,7 +29,7 @@ export function SaveButton({ recipeId, initialSaved }: SaveButtonProps) {
       className={`p-2 rounded-md border transition-colors ${
         saved
           ? "text-red-500 border-red-200 bg-red-50 hover:bg-red-100"
-          : "text-gray-400 hover:text-red-500 hover:border-red-200"
+          : "text-[var(--muted-foreground)] hover:text-red-500 hover:border-red-200"
       }`}
       title={saved ? "Unsave recipe" : "Save recipe"}
     >
