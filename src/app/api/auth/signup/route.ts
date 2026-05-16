@@ -1,11 +1,19 @@
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import bcrypt from "bcrypt";
 import { connectDB } from "@/lib/db";
 import { User } from "@/models/User";
 import { Invite } from "@/models/Invite";
 import { signupSchema } from "@/lib/validations/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const headersList = await headers();
+  const ip = headersList.get("x-forwarded-for") ?? "unknown";
+  if (!checkRateLimit(`signup:${ip}`, 5, 60_000)) {
+    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+  }
+
   try {
     const body = await request.json();
     const parsed = signupSchema.safeParse(body);

@@ -191,8 +191,15 @@ Note: This project uses Next.js on Vercel rather than the tech pack's default Ku
 
 ## Implementation State
 
-- **Current Phase:** Not started
-- **Status:** pending
-- **Completed Phases:** (none)
-- **Actual Files Changed:** (updated during implementation)
+- **Current Phase:** Phase 5 (Polish & Deployment)
+- **Status:** in_progress
+- **Completed Phases:** Phase 1, Phase 2, Phase 3, Phase 4
+- **Actual Files Changed:**
+  - `src/auth.config.ts` (new — Edge-compatible NextAuth config)
+  - `src/auth.ts` (updated — extends authConfig)
+  - `src/middleware.ts` (new — route protection for /saved, /recipes/new, /admin)
+  - `src/lib/rate-limit.ts` (new — in-memory rate limiter)
+  - `src/app/api/auth/signup/route.ts` (updated — rate limiting, 5 req/min per IP)
+  - `src/app/api/saved/route.ts` (new — GET saved recipes list)
+  - All Phase 1–4 files from Expected Files sections
 - **Blockers:** None

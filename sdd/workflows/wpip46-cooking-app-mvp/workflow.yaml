@@ -12,7 +12,7 @@ items:
     type: feature
     spec_status: approved
     plan_status: approved
-    impl_status: in_progress
+    impl_status: complete
     review_status: pending
     location: changes/2026/05/15/wpip46-cooking-app-mvp/01-cooking-app-mvp
     depends_on: []
@@ -23,5 +23,5 @@ progress:
   specs_pending: 1
   plans_completed: 0
   plans_pending: 1
-  implemented: 0
+  implemented: 1
   reviewed: 0

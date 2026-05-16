@@ -5,8 +5,10 @@ import bcrypt from "bcrypt";
 import { connectDB } from "@/lib/db";
 import { User } from "@/models/User";
 import { Invite } from "@/models/Invite";
+import { authConfig } from "./auth.config";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   providers: [
     ...(process.env.AUTH_GOOGLE_ID ? [Google] : []),
     Credentials({
@@ -37,6 +39,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    ...authConfig.callbacks,
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         await connectDB();
@@ -77,8 +80,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session;
     },
-  },
-  pages: {
-    signIn: "/login",
   },
 });
