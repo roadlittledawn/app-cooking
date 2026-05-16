@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { MarkdownEditor } from "./markdown-editor";
 import { IngredientSelect } from "./ingredient-select";
@@ -47,16 +47,50 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
   const [tagInput, setTagInput] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image ?? null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEdit = !!recipeId;
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
+
+  function clearImage() {
+    setImageFile(null);
+    setImagePreview(null);
+    setData({ ...data, image: null });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
+    let imageUrl = data.image;
+
+    if (imageFile) {
+      const form = new FormData();
+      form.append("file", imageFile);
+      const uploadRes = await fetch("/api/upload", { method: "POST", body: form });
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json();
+        setError(err.error || "Image upload failed");
+        setLoading(false);
+        return;
+      }
+      const { url } = await uploadRes.json();
+      imageUrl = url;
+    }
+
     const payload = {
       ...data,
+      image: imageUrl,
       ingredients: data.ingredients.map(({ ingredientId, amount, unit }) => ({
         ingredientId,
         amount,
@@ -185,6 +219,42 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
             className="w-full border rounded-md px-3 py-2"
           />
         </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-2">Image</label>
+        {imagePreview ? (
+          <div className="relative w-full max-w-sm">
+            <img
+              src={imagePreview}
+              alt="Recipe preview"
+              className="w-full rounded-lg object-cover max-h-48"
+            />
+            <button
+              type="button"
+              onClick={clearImage}
+              className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-black/80"
+              title="Remove image"
+            >
+              ×
+            </button>
+          </div>
+        ) : (
+          <label className="flex flex-col items-center justify-center w-full max-w-sm h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-[var(--muted)] transition-colors">
+            <svg className="w-8 h-8 mb-1 text-[var(--muted-foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span className="text-sm text-[var(--muted-foreground)]">Click to upload image</span>
+            <span className="text-xs text-[var(--muted-foreground)] mt-1">JPEG, PNG, WebP, GIF — max 5MB</span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </label>
+        )}
       </div>
 
       <div>

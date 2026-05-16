@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.19",
+    "@vercel/blob": "^2.3.3",
     "bcrypt": "^6",
     "mongoose": "^8",
     "next": "16.2.6",
