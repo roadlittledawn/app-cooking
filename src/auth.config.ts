@@ -26,6 +26,13 @@ export const authConfig: NextAuthConfig = {
       if (isProtected) return isAuthenticated;
       return true;
     },
+    session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+        (session.user as { role?: string }).role = token.role as string;
+      }
+      return session;
+    },
   },
   providers: [],
 };
