@@ -27,6 +27,7 @@ interface IngredientSelectProps {
 }
 
 export function IngredientSelect({ ingredients, onChange }: IngredientSelectProps) {
+  const [selectedIngredient, setSelectedIngredient] = useState<IngredientOption | null>(null);
   const [currentAmount, setCurrentAmount] = useState("");
   const [currentUnit, setCurrentUnit] = useState("");
 
@@ -42,9 +43,10 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
 
   async function handleSelect(option: unknown) {
     const opt = option as IngredientOption | null;
-    if (!opt || !currentAmount || !currentUnit) return;
-
-    let ingredientId = opt.value;
+    if (!opt) {
+      setSelectedIngredient(null);
+      return;
+    }
 
     if (opt.__isNew__) {
       const res = await fetch("/api/ingredients", {
@@ -54,19 +56,26 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
       });
       if (!res.ok) return;
       const created = await res.json();
-      ingredientId = created._id;
+      setSelectedIngredient({ value: created._id, label: created.name });
+    } else {
+      setSelectedIngredient(opt);
     }
+  }
+
+  function handleAddToRecipe() {
+    if (!selectedIngredient || !currentAmount || !currentUnit) return;
 
     onChange([
       ...ingredients,
       {
-        ingredientId,
-        name: opt.label,
+        ingredientId: selectedIngredient.value,
+        name: selectedIngredient.label,
         amount: currentAmount,
         unit: currentUnit,
       },
     ]);
 
+    setSelectedIngredient(null);
     setCurrentAmount("");
     setCurrentUnit("");
   }
@@ -129,9 +138,9 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
             defaultOptions
             loadOptions={loadOptions}
             onChange={handleSelect}
-            placeholder="Search or add ingredient..."
-            formatCreateLabel={(input: string) => `Add "${input}"`}
-            value={null}
+            placeholder="Search or create ingredient..."
+            formatCreateLabel={(input: string) => `Create "${input}"`}
+            value={selectedIngredient}
             styles={{
               control: (base) => ({
                 ...base,
@@ -166,6 +175,14 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
             }}
           />
         </div>
+        <button
+          type="button"
+          onClick={handleAddToRecipe}
+          disabled={!selectedIngredient || !currentAmount || !currentUnit}
+          className="bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+        >
+          Add to Recipe
+        </button>
       </div>
     </div>
   );

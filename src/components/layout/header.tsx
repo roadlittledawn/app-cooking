@@ -27,9 +27,14 @@ export function Header() {
                 New Recipe
               </Link>
               {(session.user as { role?: string }).role === "admin" && (
-                <Link href="/admin/invites" className="text-sm hover:underline">
-                  Invites
-                </Link>
+                <>
+                  <Link href="/admin/invites" className="text-sm hover:underline">
+                    Invites
+                  </Link>
+                  <Link href="/admin/ingredients" className="text-sm hover:underline">
+                    Ingredients
+                  </Link>
+                </>
               )}
               <div className="flex items-center gap-2 ml-2">
                 <span className="text-sm opacity-70">
