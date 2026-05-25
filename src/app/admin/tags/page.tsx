@@ -129,7 +129,7 @@ export default function AdminTagsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-8">
+    <div className="max-w-2xl mx-auto p-4 sm:p-8">
       <h1 className="text-2xl font-bold mb-2">Manage Tags</h1>
       <p className="text-sm text-[var(--muted-foreground)] mb-6">
         Toggle &ldquo;Show in filter&rdquo; to control which tags appear as quick-filter chips on
@@ -177,7 +177,7 @@ export default function AdminTagsPage() {
                 </button>
               </div>
             ) : confirmDeleteId !== null && confirmDeleteId === tag.tagId ? (
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <span className="text-sm text-red-700">
                   Delete &ldquo;{tag.name}&rdquo;? Removes from all recipes.
                 </span>
@@ -198,7 +198,7 @@ export default function AdminTagsPage() {
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="font-medium truncate">{tag.name}</span>
                   <span className="text-xs text-[var(--muted-foreground)] shrink-0">

@@ -139,10 +139,10 @@ export default function AdminIngredientsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-8">
+    <div className="max-w-2xl mx-auto p-4 sm:p-8">
       <h1 className="text-2xl font-bold mb-6">Manage Ingredients</h1>
 
-      <form onSubmit={handleSearch} className="flex gap-3 mb-8">
+      <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row mb-8">
         <input
           type="text"
           value={search}
@@ -199,9 +199,9 @@ export default function AdminIngredientsPage() {
                 </button>
               </div>
             ) : confirmDeleteId === ing._id ? (
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm text-red-700">Delete &ldquo;{ing.name}&rdquo;? This cannot be undone.</span>
-                <div className="flex gap-3">
+                <div className="flex gap-3 shrink-0">
                   <button
                     onClick={() => handleDelete(ing._id)}
                     disabled={loading}
@@ -218,9 +218,9 @@ export default function AdminIngredientsPage() {
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="font-medium">{ing.name}</span>
-                <div className="flex gap-3">
+                <div className="flex gap-3 shrink-0">
                   <button
                     onClick={() => startEdit(ing)}
                     className="text-sm text-blue-600 hover:underline"
@@ -268,7 +268,7 @@ export default function AdminIngredientsPage() {
           The source ingredient will be deleted and all recipe references will point to the target.
         </p>
         <form onSubmit={handleMerge} className="space-y-3">
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <div className="flex-1">
               <label className="block text-xs text-[var(--muted-foreground)] mb-1">Source (delete this)</label>
               <select
