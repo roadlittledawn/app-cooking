@@ -18,7 +18,9 @@ export const createRecipeSchema = z.object({
   tags: z.array(z.string()).default([]),
 });
 
-export const updateRecipeSchema = createRecipeSchema.partial();
+export const updateRecipeSchema = createRecipeSchema.extend({
+  featured: z.boolean().optional(),
+}).partial();
 
 export type CreateRecipeInput = z.infer<typeof createRecipeSchema>;
 export type UpdateRecipeInput = z.infer<typeof updateRecipeSchema>;

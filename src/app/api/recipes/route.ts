@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { connectDB } from "@/lib/db";
 import { Recipe } from "@/models/Recipe";
+import { Ingredient } from "@/models/Ingredient";
 import { createRecipeSchema } from "@/lib/validations/recipe";
 
 export async function GET(request: Request) {
@@ -9,7 +10,9 @@ export async function GET(request: Request) {
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "12");
   const search = searchParams.get("q") || "";
-  const tag = searchParams.get("tag") || "";
+  const tags = searchParams.get("tags")?.split(",").filter(Boolean) ?? [];
+  const ingredient = searchParams.get("ingredient") || "";
+  const sort = searchParams.get("sort") || "newest";
 
   await connectDB();
 
@@ -17,13 +20,22 @@ export async function GET(request: Request) {
   if (search) {
     filter.title = { $regex: search, $options: "i" };
   }
-  if (tag) {
-    filter.tags = tag;
+  if (tags.length > 0) {
+    filter.tags = { $in: tags };
   }
+  if (ingredient) {
+    const matched = await Ingredient.find({ name: { $regex: ingredient, $options: "i" } })
+      .select("_id")
+      .lean();
+    filter["ingredients.ingredientId"] = { $in: matched.map((i) => i._id) };
+  }
+
+  const sortQuery: Record<string, 1 | -1> =
+    sort === "alpha" ? { title: 1 } : sort === "quickest" ? { cookTime: 1 } : { createdAt: -1 };
 
   const total = await Recipe.countDocuments(filter);
   const recipes = await Recipe.find(filter)
-    .sort({ createdAt: -1 })
+    .sort(sortQuery)
     .skip((page - 1) * limit)
     .limit(limit)
     .populate("authorId", "name image")

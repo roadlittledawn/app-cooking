@@ -2,31 +2,51 @@
 @plugin "@tailwindcss/typography";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --muted: #f5f5f5;
-  --muted-foreground: #737373;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --card: #ffffff;
+  --background: #FAFAF7;
+  --foreground: #1C1C1A;
+  --accent: #B85C3C;
+  --accent-dark: #8E3F24;
+  --muted: #F0EFE9;
+  --muted-foreground: #6B6A63;
+  --border: #E2E0D6;
+  --input: #E2E0D6;
+  --card: #FFFFFF;
+  --card-hover: #FDFCF9;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --muted: #1a1a1a;
-    --muted-foreground: #a3a3a3;
-    --border: #2e2e2e;
-    --input: #2e2e2e;
-    --card: #141414;
+    --background: #141412;
+    --foreground: #EFEDE8;
+    --accent: #C96B48;
+    --accent-dark: #B85C3C;
+    --muted: #1F1E1B;
+    --muted-foreground: #9A9890;
+    --border: #2E2C27;
+    --input: #2E2C27;
+    --card: #1A1917;
+    --card-hover: #201F1C;
   }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-playfair), Georgia, serif;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 input,
@@ -35,6 +55,7 @@ select {
   background: var(--card);
   color: var(--foreground);
   border-color: var(--border);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
 }
 
 input::placeholder,
@@ -51,7 +72,7 @@ textarea::placeholder {
     --tw-prose-body: var(--foreground);
     --tw-prose-headings: var(--foreground);
     --tw-prose-bold: var(--foreground);
-    --tw-prose-links: #60a5fa;
+    --tw-prose-links: var(--accent);
     --tw-prose-code: var(--foreground);
   }
 }

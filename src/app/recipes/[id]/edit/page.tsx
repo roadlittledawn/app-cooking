@@ -11,6 +11,7 @@ interface EditRecipePageProps {
 export default async function EditRecipePage({ params }: EditRecipePageProps) {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  const isAdmin = (session.user as { role?: string }).role === "admin";
 
   const { id } = await params;
   await connectDB();
@@ -37,12 +38,13 @@ export default async function EditRecipePage({ params }: EditRecipePageProps) {
     servings: recipe.servings as number,
     image: recipe.image as string | null,
     tags: recipe.tags as string[],
+    featured: !!recipe.featured,
   };
 
   return (
     <div className="max-w-4xl mx-auto p-8">
       <h1 className="text-2xl font-bold mb-6">Edit Recipe</h1>
-      <RecipeForm initialData={initialData} recipeId={id} />
+      <RecipeForm initialData={initialData} recipeId={id} canSetFeatured={isAdmin} />
     </div>
   );
 }

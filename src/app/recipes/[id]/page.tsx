@@ -6,6 +6,7 @@ import { connectDB } from "@/lib/db";
 import { Recipe } from "@/models/Recipe";
 import { auth } from "@/auth";
 import { SaveButton } from "@/components/recipes/save-button";
+import { FeaturedToggle } from "@/components/recipes/featured-toggle";
 import { SavedRecipe } from "@/models/SavedRecipe";
 
 interface RecipePageProps {
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: RecipePageProps): Promise<Met
   if (!recipe) return { title: "Recipe Not Found" };
 
   return {
-    title: `${recipe.title} | App Cooking`,
+    title: `${recipe.title} | Abramogosch Cooking`,
     description: recipe.description?.slice(0, 160),
     openGraph: {
       title: recipe.title,
@@ -44,6 +45,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
 
   const session = await auth();
   const isOwner = session?.user?.id === recipe.authorId?._id?.toString();
+  const isAdmin = (session?.user as { role?: string })?.role === "admin";
 
   let isSaved = false;
   if (session?.user) {
@@ -55,17 +57,20 @@ export default async function RecipePage({ params }: RecipePageProps) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-8">
-      <div className="flex items-start justify-between mb-6">
-        <h1 className="text-3xl font-bold">{recipe.title}</h1>
-        <div className="flex items-center gap-2">
-          {session?.user && (
-            <SaveButton recipeId={id} initialSaved={isSaved} />
+    <div className="max-w-3xl mx-auto px-6 py-10">
+      <div className="flex items-start justify-between mb-4 gap-4">
+        <h1 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl leading-tight text-[var(--foreground)]">
+          {recipe.title}
+        </h1>
+        <div className="flex items-center gap-2 shrink-0 mt-1">
+          {session?.user && <SaveButton recipeId={id} initialSaved={isSaved} />}
+          {isAdmin && (
+            <FeaturedToggle recipeId={id} initialFeatured={!!recipe.featured} />
           )}
           {isOwner && (
             <Link
               href={`/recipes/${id}/edit`}
-              className="border px-3 py-1.5 rounded-md text-sm hover:bg-[var(--muted)]"
+              className="border border-[var(--border)] px-3 py-1.5 rounded-sm text-sm text-[var(--muted-foreground)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors duration-150"
             >
               Edit
             </Link>
@@ -73,11 +78,16 @@ export default async function RecipePage({ params }: RecipePageProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 text-sm text-[var(--muted-foreground)] mb-6">
-        <span>by {recipe.authorId?.name || "Unknown"}</span>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--muted-foreground)] mb-6">
+        <span className="italic">by {recipe.authorId?.name || "Unknown"}</span>
         {recipe.prepTime > 0 && <span>Prep: {recipe.prepTime} min</span>}
         {recipe.cookTime > 0 && <span>Cook: {recipe.cookTime} min</span>}
-        <span>Servings: {recipe.servings}</span>
+        <span>Serves {recipe.servings}</span>
+        {recipe.featured && (
+          <span className="text-[var(--accent)] text-xs font-medium tracking-wide uppercase">
+            ★ Featured
+          </span>
+        )}
       </div>
 
       {recipe.tags.length > 0 && (
@@ -85,8 +95,8 @@ export default async function RecipePage({ params }: RecipePageProps) {
           {recipe.tags.map((tag: string) => (
             <Link
               key={tag}
-              href={`/recipes?tag=${tag}`}
-              className="text-sm bg-blue-500/20 text-blue-400 px-2 py-1 rounded-md hover:bg-blue-500/30"
+              href={`/recipes?tags=${tag}`}
+              className="text-xs border border-[var(--border)] text-[var(--muted-foreground)] px-2.5 py-1 rounded-sm hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors duration-150"
             >
               {tag}
             </Link>
@@ -98,34 +108,40 @@ export default async function RecipePage({ params }: RecipePageProps) {
         <img
           src={recipe.image}
           alt={recipe.title}
-          className="w-full rounded-lg mb-6 max-h-96 object-cover"
+          className="w-full rounded-sm mb-8 max-h-96 object-cover"
         />
       )}
 
       <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3">Description</h2>
-        <div className="prose max-w-none">
+        <h2 className="font-[family-name:var(--font-playfair)] text-xl mb-3 text-[var(--foreground)]">
+          Description
+        </h2>
+        <div className="prose max-w-none text-[var(--foreground)]">
           <ReactMarkdown>{recipe.description}</ReactMarkdown>
         </div>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3">Ingredients</h2>
-        <ul className="space-y-1">
+        <h2 className="font-[family-name:var(--font-playfair)] text-xl mb-3 text-[var(--foreground)]">
+          Ingredients
+        </h2>
+        <ul className="space-y-2">
           {recipe.ingredients.map((ing: { ingredientId: { name: string }; amount: string; unit: string }, i: number) => (
-            <li key={i} className="flex gap-2">
-              <span className="font-medium">
+            <li key={i} className="flex gap-2 text-sm border-b border-[var(--border)] pb-2 last:border-0">
+              <span className="font-medium text-[var(--foreground)] w-24 shrink-0">
                 {ing.amount} {ing.unit}
               </span>
-              <span>{ing.ingredientId?.name || "Unknown"}</span>
+              <span className="text-[var(--muted-foreground)]">{ing.ingredientId?.name || "Unknown"}</span>
             </li>
           ))}
         </ul>
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold mb-3">Instructions</h2>
-        <div className="prose max-w-none">
+        <h2 className="font-[family-name:var(--font-playfair)] text-xl mb-3 text-[var(--foreground)]">
+          Instructions
+        </h2>
+        <div className="prose max-w-none text-[var(--foreground)]">
           <ReactMarkdown>{recipe.steps}</ReactMarkdown>
         </div>
       </section>

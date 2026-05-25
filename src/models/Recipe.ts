@@ -16,6 +16,7 @@ export interface IRecipe extends Document {
   servings: number;
   image: string | null;
   tags: string[];
+  featured: boolean;
   authorId: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -45,6 +46,7 @@ const RecipeSchema = new Schema<IRecipe>(
     servings: { type: Number, required: true },
     image: { type: String, default: null },
     tags: { type: [String], default: [] },
+    featured: { type: Boolean, default: false },
     authorId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }
