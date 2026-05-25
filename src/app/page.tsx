@@ -1,8 +1,19 @@
 import type { Metadata } from "next";
+import type { Types } from "mongoose";
 import Link from "next/link";
 import { connectDB } from "@/lib/db";
 import { Recipe } from "@/models/Recipe";
 import { RecipeCard } from "@/components/recipes/recipe-card";
+
+interface LeanRecipe {
+  _id: Types.ObjectId;
+  title: string;
+  image: string | null;
+  prepTime: number;
+  cookTime: number;
+  tags: string[];
+  authorId: { name: string } | null;
+}
 
 export const metadata: Metadata = {
   title: "Abramogosch Cooking",
@@ -17,12 +28,12 @@ export default async function HomePage() {
       .sort({ updatedAt: -1 })
       .limit(6)
       .populate("authorId", "name image")
-      .lean(),
+      .lean<LeanRecipe[]>(),
     Recipe.find()
       .sort({ createdAt: -1 })
       .limit(5)
       .populate("authorId", "name image")
-      .lean(),
+      .lean<LeanRecipe[]>(),
   ]);
 
   return (
@@ -58,7 +69,7 @@ export default async function HomePage() {
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featured.map((recipe: any) => (
+            {featured.map((recipe) => (
               <RecipeCard
                 key={recipe._id.toString()}
                 id={recipe._id.toString()}
@@ -94,7 +105,7 @@ export default async function HomePage() {
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recent.map((recipe: any) => (
+            {recent.map((recipe) => (
               <RecipeCard
                 key={recipe._id.toString()}
                 id={recipe._id.toString()}

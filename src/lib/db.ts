@@ -11,7 +11,7 @@ if (!MONGODB_URI) {
   throw new Error("MONGODB_URI environment variable is not defined");
 }
 
-let cached = global as typeof globalThis & {
+const cached = global as typeof globalThis & {
   mongoose: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null };
 };
 
