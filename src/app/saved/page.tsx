@@ -1,8 +1,22 @@
+import type { Types } from "mongoose";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { connectDB } from "@/lib/db";
 import { SavedRecipe } from "@/models/SavedRecipe";
 import { RecipeCard } from "@/components/recipes/recipe-card";
+
+interface LeanSavedRecipe {
+  _id: Types.ObjectId;
+  recipeId: {
+    _id: Types.ObjectId;
+    title: string;
+    image: string | null;
+    prepTime: number;
+    cookTime: number;
+    tags: string[];
+    authorId: { name: string } | null;
+  } | null;
+}
 
 export default async function SavedRecipesPage() {
   const session = await auth();
@@ -16,7 +30,7 @@ export default async function SavedRecipesPage() {
       path: "recipeId",
       populate: { path: "authorId", select: "name image" },
     })
-    .lean();
+    .lean<LeanSavedRecipe[]>();
 
   return (
     <div className="max-w-6xl mx-auto p-8">
@@ -28,7 +42,7 @@ export default async function SavedRecipesPage() {
         </p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {savedRecipes.map((saved: any) => {
+          {savedRecipes.map((saved) => {
             const recipe = saved.recipeId;
             if (!recipe) return null;
             return (
