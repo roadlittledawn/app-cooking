@@ -1,5 +1,16 @@
 import type { Metadata } from "next";
+import type { Types } from "mongoose";
 import Link from "next/link";
+
+interface LeanRecipe {
+  _id: Types.ObjectId;
+  title: string;
+  image: string | null;
+  prepTime: number;
+  cookTime: number;
+  tags: string[];
+  authorId: { name: string } | null;
+}
 import { Suspense } from "react";
 import { connectDB } from "@/lib/db";
 import { Recipe } from "@/models/Recipe";
@@ -54,7 +65,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
       .skip((currentPage - 1) * limit)
       .limit(limit)
       .populate("authorId", "name image")
-      .lean(),
+      .lean<LeanRecipe[]>(),
     Tag.find({ showInFilter: true }).sort({ name: 1 }).lean(),
     selectedIngredientIds.length > 0
       ? Ingredient.find({ _id: { $in: selectedIngredientIds } })
@@ -108,7 +119,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {recipes.map((recipe: any) => (
+          {recipes.map((recipe) => (
             <RecipeCard
               key={recipe._id.toString()}
               id={recipe._id.toString()}
