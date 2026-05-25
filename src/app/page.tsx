@@ -15,6 +15,8 @@ interface LeanRecipe {
   authorId: { name: string } | null;
 }
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Abramogosch Cooking",
   description: "A personal collection of recipes worth making again",
