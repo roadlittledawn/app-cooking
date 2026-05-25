@@ -183,7 +183,7 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
         placeholder="Write your cooking steps in markdown..."
       />
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label htmlFor="prepTime" className="block text-sm font-medium mb-1">
             Prep Time (min)

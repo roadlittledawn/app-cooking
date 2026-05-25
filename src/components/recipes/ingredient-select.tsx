@@ -110,28 +110,30 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
         </ul>
       )}
 
-      <div className="flex gap-2 items-end">
-        <div className="w-20">
-          <label className="block text-xs text-[var(--muted-foreground)] mb-1">Amount</label>
-          <input
-            type="text"
-            value={currentAmount}
-            onChange={(e) => setCurrentAmount(e.target.value)}
-            placeholder="1"
-            className="w-full border rounded-md px-2 py-1.5 text-sm"
-          />
+      <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+        <div className="flex gap-2 sm:contents">
+          <div className="w-1/2 sm:w-20">
+            <label className="block text-xs text-[var(--muted-foreground)] mb-1">Amount</label>
+            <input
+              type="text"
+              value={currentAmount}
+              onChange={(e) => setCurrentAmount(e.target.value)}
+              placeholder="1"
+              className="w-full border rounded-md px-2 py-1.5 text-sm"
+            />
+          </div>
+          <div className="w-1/2 sm:w-20">
+            <label className="block text-xs text-[var(--muted-foreground)] mb-1">Unit</label>
+            <input
+              type="text"
+              value={currentUnit}
+              onChange={(e) => setCurrentUnit(e.target.value)}
+              placeholder="cup"
+              className="w-full border rounded-md px-2 py-1.5 text-sm"
+            />
+          </div>
         </div>
-        <div className="w-20">
-          <label className="block text-xs text-[var(--muted-foreground)] mb-1">Unit</label>
-          <input
-            type="text"
-            value={currentUnit}
-            onChange={(e) => setCurrentUnit(e.target.value)}
-            placeholder="cup"
-            className="w-full border rounded-md px-2 py-1.5 text-sm"
-          />
-        </div>
-        <div className="flex-1">
+        <div className="sm:flex-1">
           <label className="block text-xs text-[var(--muted-foreground)] mb-1">Ingredient</label>
           <AsyncCreatableSelect
             cacheOptions
@@ -179,7 +181,7 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
           type="button"
           onClick={handleAddToRecipe}
           disabled={!selectedIngredient || !currentAmount || !currentUnit}
-          className="bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+          className="bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap sm:self-end"
         >
           Add to Recipe
         </button>

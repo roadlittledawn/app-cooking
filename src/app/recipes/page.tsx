@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { connectDB } from "@/lib/db";
 import { Recipe } from "@/models/Recipe";
 import { Ingredient } from "@/models/Ingredient";
+import { Tag } from "@/models/Tag";
 import { RecipeCard } from "@/components/recipes/recipe-card";
 import { SearchFilters } from "@/components/recipes/search-filters";
 
@@ -16,17 +17,18 @@ interface RecipesPageProps {
   searchParams: Promise<{
     q?: string;
     tags?: string;
-    ingredient?: string;
+    ingredientIds?: string;
     sort?: string;
     page?: string;
   }>;
 }
 
 export default async function RecipesPage({ searchParams }: RecipesPageProps) {
-  const { q, tags: tagsParam, ingredient, sort, page } = await searchParams;
+  const { q, tags: tagsParam, ingredientIds: ingredientIdsParam, sort, page } = await searchParams;
   const currentPage = parseInt(page || "1");
   const limit = 12;
   const selectedTags = tagsParam ? tagsParam.split(",").filter(Boolean) : [];
+  const selectedIngredientIds = ingredientIdsParam ? ingredientIdsParam.split(",").filter(Boolean) : [];
   const currentSort = sort || "newest";
 
   await connectDB();
@@ -34,11 +36,8 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
   const filter: Record<string, unknown> = {};
   if (q) filter.title = { $regex: q, $options: "i" };
   if (selectedTags.length > 0) filter.tags = { $in: selectedTags };
-  if (ingredient) {
-    const matched = await Ingredient.find({ name: { $regex: ingredient, $options: "i" } })
-      .select("_id")
-      .lean();
-    filter["ingredients.ingredientId"] = { $in: matched.map((i) => i._id) };
+  if (selectedIngredientIds.length > 0) {
+    filter["ingredients.ingredientId"] = { $in: selectedIngredientIds };
   }
 
   const sortQuery: Record<string, 1 | -1> =
@@ -48,7 +47,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
       ? { cookTime: 1 }
       : { createdAt: -1 };
 
-  const [total, recipes, allTags] = await Promise.all([
+  const [total, recipes, filterTags, currentIngredients] = await Promise.all([
     Recipe.countDocuments(filter),
     Recipe.find(filter)
       .sort(sortQuery)
@@ -56,7 +55,12 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
       .limit(limit)
       .populate("authorId", "name image")
       .lean(),
-    Recipe.distinct("tags"),
+    Tag.find({ showInFilter: true }).sort({ name: 1 }).lean(),
+    selectedIngredientIds.length > 0
+      ? Ingredient.find({ _id: { $in: selectedIngredientIds } })
+          .select("_id name")
+          .lean<{ _id: { toString(): string }; name: string }[]>()
+      : Promise.resolve([]),
   ]);
 
   const totalPages = Math.ceil(total / limit);
@@ -70,7 +74,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
           </h1>
           <p className="text-sm text-[var(--muted-foreground)] mt-1.5">
             {total} {total === 1 ? "recipe" : "recipes"}
-            {selectedTags.length > 0 || q || ingredient ? " found" : " in the collection"}
+            {selectedTags.length > 0 || q || selectedIngredientIds.length > 0 ? " found" : " in the collection"}
           </p>
         </div>
         <Link
@@ -83,10 +87,13 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
 
       <Suspense>
         <SearchFilters
-          allTags={allTags.sort()}
+          allTags={filterTags.map((t) => t.name)}
           currentQ={q || ""}
           currentTags={selectedTags}
-          currentIngredient={ingredient || ""}
+          currentIngredients={currentIngredients.map((i) => ({
+            id: i._id.toString(),
+            name: i.name,
+          }))}
           currentSort={currentSort}
         />
       </Suspense>
@@ -94,7 +101,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
       {recipes.length === 0 ? (
         <div className="text-center py-20 border border-dashed border-[var(--border)] rounded-sm">
           <p className="text-[var(--muted-foreground)] text-sm">
-            {q || selectedTags.length > 0 || ingredient
+            {q || selectedTags.length > 0 || selectedIngredientIds.length > 0
               ? "No recipes match your filters. Try adjusting your search."
               : "No recipes yet. Add your first one!"}
           </p>
@@ -122,7 +129,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
             const params = new URLSearchParams();
             if (q) params.set("q", q);
             if (tagsParam) params.set("tags", tagsParam);
-            if (ingredient) params.set("ingredient", ingredient);
+            if (ingredientIdsParam) params.set("ingredientIds", ingredientIdsParam);
             if (sort) params.set("sort", sort);
             params.set("page", String(p));
             return (

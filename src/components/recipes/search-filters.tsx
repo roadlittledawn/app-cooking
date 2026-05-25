@@ -2,12 +2,20 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
+import dynamic from "next/dynamic";
+
+const AsyncSelect = dynamic(() => import("react-select/async"), { ssr: false });
+
+interface IngredientOption {
+  value: string;
+  label: string;
+}
 
 interface SearchFiltersProps {
   allTags: string[];
   currentQ: string;
   currentTags: string[];
-  currentIngredient: string;
+  currentIngredients: { id: string; name: string }[];
   currentSort: string;
 }
 
@@ -15,7 +23,7 @@ export function SearchFilters({
   allTags,
   currentQ,
   currentTags,
-  currentIngredient,
+  currentIngredients,
   currentSort,
 }: SearchFiltersProps) {
   const router = useRouter();
@@ -57,13 +65,28 @@ export function SearchFilters({
     });
   };
 
+  async function loadIngredientOptions(inputValue: string): Promise<IngredientOption[]> {
+    const res = await fetch(`/api/ingredients?q=${encodeURIComponent(inputValue)}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.map((ing: { _id: string; name: string }) => ({
+      value: ing._id,
+      label: ing.name,
+    }));
+  }
+
+  const selectedIngredientOptions: IngredientOption[] = currentIngredients.map((i) => ({
+    value: i.id,
+    label: i.name,
+  }));
+
   const hasActiveFilters =
-    currentQ || currentTags.length > 0 || currentIngredient || currentSort !== "newest";
+    currentQ || currentTags.length > 0 || currentIngredients.length > 0 || currentSort !== "newest";
 
   return (
     <div className="mb-8 space-y-4">
       {/* Search row */}
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <input
           type="text"
           defaultValue={currentQ}
@@ -74,16 +97,71 @@ export function SearchFilters({
           }}
           className="flex-1 border border-[var(--border)] bg-[var(--card)] rounded-sm px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder:text-[var(--muted-foreground)] transition-colors"
         />
-        <input
-          type="text"
-          defaultValue={currentIngredient}
-          placeholder="Filter by ingredient…"
-          onChange={(e) => {
-            const val = e.target.value;
-            updateParams({ ingredient: val || null });
-          }}
-          className="w-52 border border-[var(--border)] bg-[var(--card)] rounded-sm px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder:text-[var(--muted-foreground)] transition-colors"
-        />
+        <div className="sm:w-64">
+          <AsyncSelect
+            isMulti
+            cacheOptions
+            defaultOptions
+            loadOptions={loadIngredientOptions}
+            value={selectedIngredientOptions}
+            onChange={(selected) => {
+              const opts = selected as IngredientOption[];
+              updateParams({ ingredientIds: opts.map((o) => o.value) });
+            }}
+            placeholder="Filter by ingredient…"
+            noOptionsMessage={({ inputValue }) =>
+              inputValue.length < 1 ? "Type to search ingredients" : "No ingredients found"
+            }
+            styles={{
+              control: (base, state) => ({
+                ...base,
+                minHeight: "42px",
+                fontSize: "0.875rem",
+                backgroundColor: "var(--card)",
+                borderColor: state.isFocused ? "var(--accent)" : "var(--border)",
+                borderRadius: "2px",
+                boxShadow: state.isFocused ? "0 0 0 1px var(--accent)" : "none",
+                "&:hover": { borderColor: "var(--accent)" },
+              }),
+              menu: (base) => ({
+                ...base,
+                backgroundColor: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: "2px",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+              }),
+              option: (base, state) => ({
+                ...base,
+                fontSize: "0.875rem",
+                backgroundColor: state.isFocused ? "var(--muted)" : "var(--card)",
+                color: "var(--foreground)",
+              }),
+              multiValue: (base) => ({
+                ...base,
+                backgroundColor: "var(--accent)",
+                borderRadius: "2px",
+              }),
+              multiValueLabel: (base) => ({
+                ...base,
+                color: "white",
+                fontSize: "0.75rem",
+              }),
+              multiValueRemove: (base) => ({
+                ...base,
+                color: "white",
+                "&:hover": { backgroundColor: "var(--accent-dark)", color: "white" },
+              }),
+              input: (base) => ({ ...base, color: "var(--foreground)" }),
+              placeholder: (base) => ({ ...base, color: "var(--muted-foreground)" }),
+              indicatorSeparator: () => ({ display: "none" }),
+              dropdownIndicator: (base) => ({
+                ...base,
+                color: "var(--muted-foreground)",
+                "&:hover": { color: "var(--foreground)" },
+              }),
+            }}
+          />
+        </div>
         <select
           value={currentSort}
           onChange={(e) => updateParams({ sort: e.target.value === "newest" ? null : e.target.value })}
@@ -128,18 +206,6 @@ export function SearchFilters({
                 onClick={() => updateParams({ q: null })}
                 className="ml-0.5 hover:text-[var(--accent)] transition-colors"
                 aria-label="Remove title filter"
-              >
-                ×
-              </button>
-            </span>
-          )}
-          {currentIngredient && (
-            <span className="inline-flex items-center gap-1 text-xs bg-[var(--muted)] text-[var(--foreground)] px-2.5 py-1 rounded-full">
-              ingredient: {currentIngredient}
-              <button
-                onClick={() => updateParams({ ingredient: null })}
-                className="ml-0.5 hover:text-[var(--accent)] transition-colors"
-                aria-label="Remove ingredient filter"
               >
                 ×
               </button>
