@@ -4,7 +4,7 @@ import { connectDB } from "@/lib/db";
 import { Tag } from "@/models/Tag";
 import { Recipe } from "@/models/Recipe";
 import { User } from "@/models/User";
-import { createTagSchema } from "@/lib/validations/tag";
+import { createTagSchema, renameTagSchema } from "@/lib/validations/tag";
 
 async function requireAdmin() {
   const session = await auth();
@@ -69,4 +69,37 @@ export async function POST(request: Request) {
   );
 
   return NextResponse.json(tag);
+}
+
+// Rename a tag by name — used when no Tag doc exists yet
+export async function PATCH(request: Request) {
+  const admin = await requireAdmin();
+  if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const body = await request.json();
+  const parsed = renameTagSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Validation failed" }, { status: 400 });
+  }
+
+  const oldName = parsed.data.name.toLowerCase().trim();
+  const newName = parsed.data.newName.toLowerCase().trim();
+
+  if (oldName === newName) return NextResponse.json({ name: newName });
+
+  const collision = await Tag.findOne({ name: newName });
+  if (collision) {
+    return NextResponse.json({ error: "A tag with that name already exists" }, { status: 409 });
+  }
+
+  await Recipe.updateMany(
+    { tags: oldName },
+    { $set: { "tags.$[el]": newName } },
+    { arrayFilters: [{ el: oldName }] }
+  );
+
+  // Update Tag doc if one exists, otherwise leave it (no doc to update)
+  await Tag.findOneAndUpdate({ name: oldName }, { $set: { name: newName } });
+
+  return NextResponse.json({ name: newName });
 }

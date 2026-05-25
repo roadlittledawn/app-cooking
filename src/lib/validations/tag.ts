@@ -9,3 +9,8 @@ export const updateTagSchema = z.object({
   name: z.string().min(1).max(50).optional(),
   showInFilter: z.boolean().optional(),
 });
+
+export const renameTagSchema = z.object({
+  name: z.string().min(1).max(50),
+  newName: z.string().min(1).max(50),
+});

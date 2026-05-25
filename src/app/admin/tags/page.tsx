@@ -11,7 +11,7 @@ interface TagRow {
 
 export default function AdminTagsPage() {
   const [tags, setTags] = useState<TagRow[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -65,26 +65,32 @@ export default function AdminTagsPage() {
   }
 
   function startEdit(tag: TagRow) {
-    setEditingId(tag.tagId);
+    setEditingName(tag.name);
     setEditValue(tag.name);
     setError("");
     setSuccess("");
   }
 
   function cancelEdit() {
-    setEditingId(null);
+    setEditingName(null);
     setEditValue("");
   }
 
-  async function handleSaveEdit(tagId: string) {
+  async function handleSaveEdit(tag: TagRow) {
     setError("");
     setLoading(true);
 
-    const res = await fetch(`/api/admin/tags/${tagId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editValue }),
-    });
+    const res = tag.tagId
+      ? await fetch(`/api/admin/tags/${tag.tagId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: editValue }),
+        })
+      : await fetch("/api/admin/tags", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: tag.name, newName: editValue }),
+        });
 
     const data = await res.json();
     setLoading(false);
@@ -94,7 +100,7 @@ export default function AdminTagsPage() {
       return;
     }
 
-    setEditingId(null);
+    setEditingName(null);
     setSuccess(`Renamed to "${data.name}"`);
     await fetchTags();
   }
@@ -142,21 +148,21 @@ export default function AdminTagsPage() {
         )}
         {tags.map((tag) => (
           <div key={tag.name} className="p-4">
-            {editingId === tag.tagId && tag.tagId ? (
+            {editingName === tag.name ? (
               <div className="flex gap-2 items-center">
                 <input
                   type="text"
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSaveEdit(tag.tagId!);
+                    if (e.key === "Enter") handleSaveEdit(tag);
                     if (e.key === "Escape") cancelEdit();
                   }}
                   className="flex-1 border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   autoFocus
                 />
                 <button
-                  onClick={() => handleSaveEdit(tag.tagId!)}
+                  onClick={() => handleSaveEdit(tag)}
                   disabled={loading || !editValue.trim()}
                   className="text-sm text-[var(--accent)] hover:underline disabled:opacity-50"
                 >
@@ -169,7 +175,7 @@ export default function AdminTagsPage() {
                   Cancel
                 </button>
               </div>
-            ) : confirmDeleteId === tag.tagId ? (
+            ) : confirmDeleteId !== null && confirmDeleteId === tag.tagId ? (
               <div className="flex items-center justify-between gap-4">
                 <span className="text-sm text-red-700">
                   Delete &ldquo;{tag.name}&rdquo;? Removes from all recipes.
@@ -213,25 +219,23 @@ export default function AdminTagsPage() {
                     </div>
                     <span className="text-xs text-[var(--muted-foreground)]">Show in filter</span>
                   </label>
+                  <button
+                    onClick={() => startEdit(tag)}
+                    className="text-sm text-[var(--accent)] hover:underline"
+                  >
+                    Rename
+                  </button>
                   {tag.tagId && (
-                    <>
-                      <button
-                        onClick={() => startEdit(tag)}
-                        className="text-sm text-[var(--accent)] hover:underline"
-                      >
-                        Rename
-                      </button>
-                      <button
-                        onClick={() => {
-                          setConfirmDeleteId(tag.tagId);
-                          setError("");
-                          setSuccess("");
-                        }}
-                        className="text-sm text-red-600 hover:underline"
-                      >
-                        Delete
-                      </button>
-                    </>
+                    <button
+                      onClick={() => {
+                        setConfirmDeleteId(tag.tagId);
+                        setError("");
+                        setSuccess("");
+                      }}
+                      className="text-sm text-red-600 hover:underline"
+                    >
+                      Delete
+                    </button>
                   )}
                 </div>
               </div>
