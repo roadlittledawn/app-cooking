@@ -19,6 +19,7 @@ export function Header() {
             ? [
                 { href: "/admin/invites", label: "Invites" },
                 { href: "/admin/ingredients", label: "Ingredients" },
+                { href: "/admin/tags", label: "Tags" },
               ]
             : []),
         ]
