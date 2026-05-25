@@ -22,11 +22,13 @@ interface RecipeFormData {
   servings: number;
   image: string | null;
   tags: string[];
+  featured: boolean;
 }
 
 interface RecipeFormProps {
-  initialData?: RecipeFormData;
+  initialData?: Partial<RecipeFormData>;
   recipeId?: string;
+  canSetFeatured?: boolean;
 }
 
 const defaultData: RecipeFormData = {
@@ -39,11 +41,12 @@ const defaultData: RecipeFormData = {
   servings: 1,
   image: null,
   tags: [],
+  featured: false,
 };
 
-export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
+export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeFormProps) {
   const router = useRouter();
-  const [data, setData] = useState<RecipeFormData>(initialData || defaultData);
+  const [data, setData] = useState<RecipeFormData>({ ...defaultData, ...initialData });
   const [tagInput, setTagInput] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -88,14 +91,21 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
       imageUrl = url;
     }
 
-    const payload = {
-      ...data,
+    const payload: Record<string, unknown> = {
+      title: data.title,
+      description: data.description,
+      steps: data.steps,
+      prepTime: data.prepTime,
+      cookTime: data.cookTime,
+      servings: data.servings,
+      tags: data.tags,
       image: imageUrl,
       ingredients: data.ingredients.map(({ ingredientId, amount, unit }) => ({
         ingredientId,
         amount,
         unit,
       })),
+      ...(canSetFeatured && recipeId ? { featured: data.featured } : {}),
     };
 
     const url = isEdit ? `/api/recipes/${recipeId}` : "/api/recipes";
@@ -300,10 +310,29 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
         </div>
       </div>
 
+      {canSetFeatured && recipeId && (
+        <label className="flex items-center gap-3 cursor-pointer select-none">
+          <div className="relative">
+            <input
+              type="checkbox"
+              checked={data.featured}
+              onChange={(e) => setData({ ...data, featured: e.target.checked })}
+              className="sr-only peer"
+            />
+            <div className="w-10 h-5 bg-[var(--border)] rounded-full peer peer-checked:bg-[var(--accent)] transition-colors duration-150" />
+            <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-150 peer-checked:translate-x-5" />
+          </div>
+          <span className="text-sm text-[var(--foreground)]">Featured recipe</span>
+          {data.featured && (
+            <span className="text-xs text-[var(--accent)]">★ Will appear on the home page</span>
+          )}
+        </label>
+      )}
+
       <button
         type="submit"
         disabled={loading}
-        className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+        className="bg-[var(--accent)] text-white px-6 py-2 rounded-sm hover:bg-[var(--accent-dark)] disabled:opacity-50 transition-colors duration-150"
       >
         {loading
           ? isEdit
