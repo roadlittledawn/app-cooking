@@ -42,21 +42,13 @@ export default async function HomePage() {
       {/* Featured */}
       {featured.length > 0 && (
         <section className="max-w-6xl mx-auto px-6 py-12">
-          <div className="flex items-end justify-between mb-8">
-            <div>
-              <p className="text-xs tracking-[0.15em] uppercase text-[var(--accent)] mb-1 font-medium">
-                ★ Featured
-              </p>
-              <h2 className="font-[family-name:var(--font-playfair)] text-3xl text-[var(--foreground)]">
-                Worth Making This Week
-              </h2>
-            </div>
-            <Link
-              href="/recipes"
-              className="text-sm text-[var(--muted-foreground)] hover:text-[var(--accent)] transition-colors duration-150"
-            >
-              All recipes →
-            </Link>
+          <div className="mb-8">
+            <p className="text-xs tracking-[0.15em] uppercase text-[var(--accent)] mb-1 font-medium">
+              ★ Featured
+            </p>
+            <h2 className="font-[family-name:var(--font-playfair)] text-3xl text-[var(--foreground)]">
+              Worth Making This Week
+            </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {featured.map((recipe: any) => (
