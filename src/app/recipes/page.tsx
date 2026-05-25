@@ -83,7 +83,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
 
       <Suspense>
         <SearchFilters
-          allTags={allTags.sort()}
+          allTags={[...new Set(allTags)].sort()}
           currentQ={q || ""}
           currentTags={selectedTags}
           currentIngredient={ingredient || ""}
