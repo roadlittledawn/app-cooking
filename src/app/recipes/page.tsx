@@ -1,71 +1,104 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { connectDB } from "@/lib/db";
 import { Recipe } from "@/models/Recipe";
+import { Ingredient } from "@/models/Ingredient";
 import { RecipeCard } from "@/components/recipes/recipe-card";
+import { SearchFilters } from "@/components/recipes/search-filters";
 
 export const metadata: Metadata = {
-  title: "Recipes | App Cooking",
+  title: "Recipes | Abramogosch Cooking",
   description: "Browse and discover cooking recipes",
 };
 
 interface RecipesPageProps {
-  searchParams: Promise<{ q?: string; tag?: string; page?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    tags?: string;
+    ingredient?: string;
+    sort?: string;
+    page?: string;
+  }>;
 }
 
 export default async function RecipesPage({ searchParams }: RecipesPageProps) {
-  const { q, tag, page } = await searchParams;
+  const { q, tags: tagsParam, ingredient, sort, page } = await searchParams;
   const currentPage = parseInt(page || "1");
   const limit = 12;
+  const selectedTags = tagsParam ? tagsParam.split(",").filter(Boolean) : [];
+  const currentSort = sort || "newest";
 
   await connectDB();
 
   const filter: Record<string, unknown> = {};
   if (q) filter.title = { $regex: q, $options: "i" };
-  if (tag) filter.tags = tag;
+  if (selectedTags.length > 0) filter.tags = { $in: selectedTags };
+  if (ingredient) {
+    const matched = await Ingredient.find({ name: { $regex: ingredient, $options: "i" } })
+      .select("_id")
+      .lean();
+    filter["ingredients.ingredientId"] = { $in: matched.map((i) => i._id) };
+  }
 
-  const total = await Recipe.countDocuments(filter);
-  const recipes = await Recipe.find(filter)
-    .sort({ createdAt: -1 })
-    .skip((currentPage - 1) * limit)
-    .limit(limit)
-    .populate("authorId", "name image")
-    .lean();
+  const sortQuery: Record<string, 1 | -1> =
+    currentSort === "alpha"
+      ? { title: 1 }
+      : currentSort === "quickest"
+      ? { cookTime: 1 }
+      : { createdAt: -1 };
+
+  const [total, recipes, allTags] = await Promise.all([
+    Recipe.countDocuments(filter),
+    Recipe.find(filter)
+      .sort(sortQuery)
+      .skip((currentPage - 1) * limit)
+      .limit(limit)
+      .populate("authorId", "name image")
+      .lean(),
+    Recipe.distinct("tags"),
+  ]);
 
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="max-w-6xl mx-auto p-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Recipes</h1>
+    <div className="max-w-6xl mx-auto px-8 py-10">
+      <div className="flex items-end justify-between mb-8">
+        <div>
+          <h1 className="font-[family-name:var(--font-playfair)] text-4xl text-[var(--foreground)]">
+            Recipes
+          </h1>
+          <p className="text-sm text-[var(--muted-foreground)] mt-1.5">
+            {total} {total === 1 ? "recipe" : "recipes"}
+            {selectedTags.length > 0 || q || ingredient ? " found" : " in the collection"}
+          </p>
+        </div>
         <Link
           href="/recipes/new"
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          className="text-sm bg-[var(--accent)] text-white px-5 py-2 rounded-sm hover:bg-[var(--accent-dark)] transition-colors duration-150 tracking-wide"
         >
           New Recipe
         </Link>
       </div>
 
-      <form className="mb-6 flex gap-3">
-        <input
-          name="q"
-          type="text"
-          defaultValue={q}
-          placeholder="Search recipes..."
-          className="flex-1 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      <Suspense>
+        <SearchFilters
+          allTags={allTags.sort()}
+          currentQ={q || ""}
+          currentTags={selectedTags}
+          currentIngredient={ingredient || ""}
+          currentSort={currentSort}
         />
-        <button
-          type="submit"
-          className="border px-4 py-2 rounded-md hover:bg-[var(--muted)]"
-        >
-          Search
-        </button>
-      </form>
+      </Suspense>
 
       {recipes.length === 0 ? (
-        <p className="text-[var(--muted-foreground)] text-center py-12">
-          No recipes found. {q || tag ? "Try a different search." : "Create your first recipe!"}
-        </p>
+        <div className="text-center py-20 border border-dashed border-[var(--border)] rounded-sm">
+          <p className="text-[var(--muted-foreground)] text-sm">
+            {q || selectedTags.length > 0 || ingredient
+              ? "No recipes match your filters. Try adjusting your search."
+              : "No recipes yet. Add your first one!"}
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {recipes.map((recipe: any) => (
@@ -84,20 +117,28 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
       )}
 
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-8">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <Link
-              key={p}
-              href={`/recipes?page=${p}${q ? `&q=${q}` : ""}${tag ? `&tag=${tag}` : ""}`}
-              className={`px-3 py-1 rounded-md ${
-                p === currentPage
-                  ? "bg-blue-600 text-white"
-                  : "border hover:bg-[var(--muted)]"
-              }`}
-            >
-              {p}
-            </Link>
-          ))}
+        <div className="flex justify-center gap-2 mt-12">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+            const params = new URLSearchParams();
+            if (q) params.set("q", q);
+            if (tagsParam) params.set("tags", tagsParam);
+            if (ingredient) params.set("ingredient", ingredient);
+            if (sort) params.set("sort", sort);
+            params.set("page", String(p));
+            return (
+              <Link
+                key={p}
+                href={`/recipes?${params.toString()}`}
+                className={`w-8 h-8 flex items-center justify-center text-sm rounded-sm transition-colors duration-150 ${
+                  p === currentPage
+                    ? "bg-[var(--accent)] text-white"
+                    : "border border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                }`}
+              >
+                {p}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
