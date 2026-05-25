@@ -5,18 +5,13 @@ import { Ingredient } from "@/models/Ingredient";
 import { createIngredientSchema } from "@/lib/validations/ingredient";
 
 export async function GET(request: Request) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q") || "";
 
   await connectDB();
 
   const filter = q
-    ? { name: { $regex: `^${q}`, $options: "i" } }
+    ? { name: { $regex: q, $options: "i" } }
     : {};
 
   const ingredients = await Ingredient.find(filter)
