@@ -118,6 +118,46 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
 
+## Branching Strategy
+
+- **`main`** — production branch. Deploys to prod. Never commit directly; merge only via PR from `develop`.
+- **`develop`** — default branch. All feature/bugfix branches are cut from here and PR'd back here.
+
+### Workflow
+
+```
+feature/my-thing  →  develop  →  main
+                  (PR)        (PR)
+```
+
+1. Cut a branch from `develop`: `git checkout -b feature/my-thing`
+2. Open a PR targeting `develop` when ready
+3. The **PR Validation** check (`.github/workflows/pr-validation.yml`) must pass — it runs ESLint and `tsc --noEmit`
+4. Merge to `develop`
+5. To release, open a PR from `develop` → `main`
+
+### Branch protection
+
+Both `develop` and `main` require:
+- A PR (no direct pushes, including admins)
+- The `Lint & Type Check` status check to pass
+
+### Linting
+
+ESLint is configured in `eslint.config.mjs` (Next.js + TypeScript rules). Run locally with:
+
+```
+npm run lint
+```
+
+Type-check without emitting:
+
+```
+npx tsc --noEmit
+```
+
+Both must pass cleanly before any PR can merge.
+
 ## Spec-Driven Development
 
 1. **Specs are truth:** Every change needs a SPEC.md
