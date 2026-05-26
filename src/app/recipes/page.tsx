@@ -78,22 +78,14 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
 
   return (
     <div className="max-w-6xl mx-auto px-8 py-10">
-      <div className="flex items-end justify-between mb-8">
-        <div>
-          <h1 className="font-[family-name:var(--font-playfair)] text-4xl text-[var(--foreground)]">
-            Recipes
-          </h1>
-          <p className="text-sm text-[var(--muted-foreground)] mt-1.5">
-            {total} {total === 1 ? "recipe" : "recipes"}
-            {selectedTags.length > 0 || q || selectedIngredientIds.length > 0 ? " found" : " in the collection"}
-          </p>
-        </div>
-        <Link
-          href="/recipes/new"
-          className="text-sm bg-[var(--accent)] text-white px-5 py-2 rounded-sm hover:bg-[var(--accent-dark)] transition-colors duration-150 tracking-wide"
-        >
-          New Recipe
-        </Link>
+      <div className="mb-8">
+        <h1 className="font-[family-name:var(--font-playfair)] text-4xl text-[var(--foreground)]">
+          Recipes
+        </h1>
+        <p className="text-sm text-[var(--muted-foreground)] mt-1.5">
+          {total} {total === 1 ? "recipe" : "recipes"}
+          {selectedTags.length > 0 || q || selectedIngredientIds.length > 0 ? " found" : " in the collection"}
+        </p>
       </div>
 
       <Suspense>
