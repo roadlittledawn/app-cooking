@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
+import { Pencil } from "lucide-react";
 import { connectDB } from "@/lib/db";
 import { Recipe } from "@/models/Recipe";
 import { auth } from "@/auth";
 import { SaveButton } from "@/components/recipes/save-button";
-import { FeaturedToggle } from "@/components/recipes/featured-toggle";
 import { SavedRecipe } from "@/models/SavedRecipe";
 
 interface RecipePageProps {
@@ -45,7 +45,6 @@ export default async function RecipePage({ params }: RecipePageProps) {
 
   const session = await auth();
   const isOwner = session?.user?.id === recipe.authorId?._id?.toString();
-  const isAdmin = (session?.user as { role?: string })?.role === "admin";
 
   let isSaved = false;
   if (session?.user) {
@@ -58,24 +57,20 @@ export default async function RecipePage({ params }: RecipePageProps) {
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
-      <div className="flex items-start justify-between mb-4 gap-4">
-        <h1 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl leading-tight text-[var(--foreground)]">
-          {recipe.title}
-        </h1>
-        <div className="flex items-center gap-2 shrink-0 mt-1">
-          {session?.user && <SaveButton recipeId={id} initialSaved={isSaved} />}
-          {isAdmin && (
-            <FeaturedToggle recipeId={id} initialFeatured={!!recipe.featured} />
-          )}
-          {isOwner && (
-            <Link
-              href={`/recipes/${id}/edit`}
-              className="border border-[var(--border)] px-3 py-1.5 rounded-sm text-sm text-[var(--muted-foreground)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors duration-150"
-            >
-              Edit
-            </Link>
-          )}
-        </div>
+      <h1 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl leading-tight text-[var(--foreground)] mb-3">
+        {recipe.title}
+      </h1>
+      <div className="flex items-center gap-2 mb-4">
+        {session?.user && <SaveButton recipeId={id} initialSaved={isSaved} />}
+        {isOwner && (
+          <Link
+            href={`/recipes/${id}/edit`}
+            className="flex items-center gap-1.5 border border-[var(--border)] px-3 py-1.5 rounded-sm text-sm text-[var(--muted-foreground)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors duration-150"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+            Edit
+          </Link>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--muted-foreground)] mb-6">
