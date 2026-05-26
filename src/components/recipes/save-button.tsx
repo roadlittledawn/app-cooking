@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Heart } from "lucide-react";
 
 interface SaveButtonProps {
   recipeId: string;
@@ -10,6 +11,7 @@ interface SaveButtonProps {
 export function SaveButton({ recipeId, initialSaved }: SaveButtonProps) {
   const [saved, setSaved] = useState(initialSaved);
   const [loading, setLoading] = useState(false);
+  const [popping, setPopping] = useState(false);
 
   async function toggleSave() {
     setLoading(true);
@@ -17,7 +19,12 @@ export function SaveButton({ recipeId, initialSaved }: SaveButtonProps) {
     const res = await fetch(`/api/saved/${recipeId}`, { method });
 
     if (res.ok) {
-      setSaved(!saved);
+      const next = !saved;
+      setSaved(next);
+      if (next) {
+        setPopping(true);
+        setTimeout(() => setPopping(false), 700);
+      }
     }
     setLoading(false);
   }
@@ -26,26 +33,23 @@ export function SaveButton({ recipeId, initialSaved }: SaveButtonProps) {
     <button
       onClick={toggleSave}
       disabled={loading}
-      className={`p-2 rounded-md border transition-colors ${
+      className={`relative p-2 rounded-md border transition-colors ${
         saved
-          ? "text-red-500 border-red-200 bg-red-50 hover:bg-red-100"
+          ? "text-red-500 border-red-200 bg-[var(--muted)] hover:bg-[var(--muted)]"
           : "text-[var(--muted-foreground)] hover:text-red-500 hover:border-red-200"
       }`}
       title={saved ? "Unsave recipe" : "Save recipe"}
     >
-      <svg
-        className="w-5 h-5"
+      {popping && (
+        <>
+          <span className="pointer-events-none absolute inset-0 rounded-full bg-red-400 animate-[ripple-out_0.55s_ease-out_forwards]" />
+          <span className="pointer-events-none absolute inset-0 rounded-full bg-red-400 animate-[ripple-out_0.55s_ease-out_0.18s_forwards]" />
+        </>
+      )}
+      <Heart
+        className={`w-5 h-5 ${popping ? "animate-[heart-pop_0.4s_ease-out]" : ""}`}
         fill={saved ? "currentColor" : "none"}
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-        />
-      </svg>
+      />
     </button>
   );
 }
