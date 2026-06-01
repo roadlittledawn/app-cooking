@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 import { Pencil } from "lucide-react";
 import { connectDB } from "@/lib/db";
 import { Recipe } from "@/models/Recipe";
@@ -112,7 +113,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
           Description
         </h2>
         <div className="prose max-w-none text-[var(--foreground)]">
-          <ReactMarkdown>{recipe.description}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkBreaks]}>{recipe.description}</ReactMarkdown>
         </div>
       </section>
 
@@ -137,7 +138,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
           Instructions
         </h2>
         <div className="prose max-w-none text-[var(--foreground)]">
-          <ReactMarkdown>{recipe.steps}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkBreaks]}>{recipe.steps}</ReactMarkdown>
         </div>
       </section>
     </div>
