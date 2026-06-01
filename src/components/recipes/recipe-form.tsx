@@ -49,6 +49,7 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
   const [data, setData] = useState<RecipeFormData>({ ...defaultData, ...initialData });
   const [tagInput, setTagInput] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image ?? null);
@@ -73,6 +74,7 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     let imageUrl = data.image;
@@ -126,8 +128,12 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
     }
 
     const recipe = await res.json();
-    router.push(`/recipes/${recipe._id}`);
-    router.refresh();
+    if (isEdit) {
+      setSuccess("Recipe saved successfully.");
+    } else {
+      router.push(`/recipes/${recipe._id}`);
+      router.refresh();
+    }
   }
 
   function addTag() {
@@ -147,6 +153,12 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
       {error && (
         <div className="bg-red-500/10 text-red-400 p-3 rounded-md text-sm">
           {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-green-500/10 text-green-600 p-3 rounded-md text-sm">
+          {success}
         </div>
       )}
 
@@ -192,7 +204,8 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
             id="prepTime"
             type="number"
             min={0}
-            value={data.prepTime}
+            value={data.prepTime || ""}
+            placeholder="0"
             onChange={(e) =>
               setData({ ...data, prepTime: parseInt(e.target.value) || 0 })
             }
@@ -207,7 +220,8 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
             id="cookTime"
             type="number"
             min={0}
-            value={data.cookTime}
+            value={data.cookTime || ""}
+            placeholder="0"
             onChange={(e) =>
               setData({ ...data, cookTime: parseInt(e.target.value) || 0 })
             }
@@ -311,18 +325,20 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
       </div>
 
       {canSetFeatured && recipeId && (
-        <label className="flex items-center gap-3 cursor-pointer select-none">
-          <div className="relative">
-            <input
-              type="checkbox"
-              checked={data.featured}
-              onChange={(e) => setData({ ...data, featured: e.target.checked })}
-              className="sr-only peer"
-            />
-            <div className="w-10 h-5 bg-[var(--border)] rounded-full peer peer-checked:bg-[var(--accent)] transition-colors duration-150" />
-            <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-150 peer-checked:translate-x-5" />
+        <label className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 cursor-pointer select-none">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={data.featured}
+                onChange={(e) => setData({ ...data, featured: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-10 h-5 bg-[var(--border)] rounded-full peer peer-checked:bg-[var(--accent)] transition-colors duration-150" />
+              <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-150 peer-checked:translate-x-5" />
+            </div>
+            <span className="text-sm text-[var(--foreground)]">Featured recipe</span>
           </div>
-          <span className="text-sm text-[var(--foreground)]">Featured recipe</span>
           {data.featured && (
             <span className="text-xs text-[var(--accent)]">★ Will appear on the home page</span>
           )}
