@@ -77,6 +77,10 @@ textarea::placeholder {
   color: var(--muted-foreground);
 }
 
+button {
+  cursor: pointer;
+}
+
 .border {
   border-color: var(--border);
 }
