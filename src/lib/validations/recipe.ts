@@ -3,12 +3,12 @@ import { z } from "zod";
 export const recipeIngredientSchema = z.object({
   ingredientId: z.string().min(1),
   amount: z.string().min(1, "Amount is required"),
-  unit: z.string().min(1, "Unit is required"),
+  unit: z.string().optional().default(""),
 });
 
 export const createRecipeSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
-  description: z.string().min(1, "Description is required"),
+  description: z.string().optional().default(""),
   ingredients: z.array(recipeIngredientSchema).min(1, "At least one ingredient is required"),
   steps: z.string().min(1, "Steps are required"),
   prepTime: z.number().int().min(0),
