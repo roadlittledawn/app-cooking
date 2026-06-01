@@ -108,30 +108,34 @@ export default async function RecipePage({ params }: RecipePageProps) {
         />
       )}
 
-      <section className="mb-8">
-        <h2 className="font-[family-name:var(--font-playfair)] text-xl mb-3 text-[var(--foreground)]">
-          Description
-        </h2>
-        <div className="prose max-w-none text-[var(--foreground)]">
-          <ReactMarkdown remarkPlugins={[remarkBreaks]}>{recipe.description}</ReactMarkdown>
-        </div>
-      </section>
+      {recipe.description && (
+        <section className="mb-8">
+          <h2 className="font-[family-name:var(--font-playfair)] text-xl mb-3 text-[var(--foreground)]">
+            Description
+          </h2>
+          <div className="prose max-w-none text-[var(--foreground)]">
+            <ReactMarkdown remarkPlugins={[remarkBreaks]}>{recipe.description}</ReactMarkdown>
+          </div>
+        </section>
+      )}
 
-      <section className="mb-8">
-        <h2 className="font-[family-name:var(--font-playfair)] text-xl mb-3 text-[var(--foreground)]">
-          Ingredients
-        </h2>
-        <ul className="space-y-2">
-          {recipe.ingredients.map((ing: { ingredientId: { name: string }; amount: string; unit: string }, i: number) => (
-            <li key={i} className="flex gap-2 text-sm border-b border-[var(--border)] pb-2 last:border-0">
-              <span className="font-medium text-[var(--foreground)] w-24 shrink-0">
-                {ing.amount} {ing.unit}
-              </span>
-              <span className="text-[var(--muted-foreground)]">{ing.ingredientId?.name || "Unknown"}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {recipe.ingredients?.length > 0 && (
+        <section className="mb-8">
+          <h2 className="font-[family-name:var(--font-playfair)] text-xl mb-3 text-[var(--foreground)]">
+            Ingredients
+          </h2>
+          <ul className="space-y-2">
+            {recipe.ingredients.map((ing: { ingredientId: { name: string }; amount: string; unit: string }, i: number) => (
+              <li key={i} className="flex gap-2 text-sm border-b border-[var(--border)] pb-2 last:border-0">
+                <span className="font-medium text-[var(--foreground)] w-24 shrink-0">
+                  {ing.amount}{ing.unit ? ` ${ing.unit}` : ""}
+                </span>
+                <span className="text-[var(--muted-foreground)]">{ing.ingredientId?.name || "Unknown"}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section>
         <h2 className="font-[family-name:var(--font-playfair)] text-xl mb-3 text-[var(--foreground)]">
