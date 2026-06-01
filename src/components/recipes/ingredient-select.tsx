@@ -63,7 +63,7 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
   }
 
   function handleAddToRecipe() {
-    if (!selectedIngredient || !currentAmount || !currentUnit) return;
+    if (!selectedIngredient || !currentAmount) return;
 
     onChange([
       ...ingredients,
@@ -96,7 +96,7 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
               className="flex items-center gap-2 bg-[var(--muted)] px-3 py-2 rounded-md"
             >
               <span className="flex-1">
-                {ing.amount} {ing.unit} — {ing.name}
+                {ing.amount}{ing.unit ? ` ${ing.unit}` : ""} — {ing.name}
               </span>
               <button
                 type="button"
@@ -180,7 +180,7 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
         <button
           type="button"
           onClick={handleAddToRecipe}
-          disabled={!selectedIngredient || !currentAmount || !currentUnit}
+          disabled={!selectedIngredient || !currentAmount}
           className="bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap sm:self-end"
         >
           Add to Recipe
