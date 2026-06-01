@@ -69,6 +69,7 @@ select {
   color: var(--foreground);
   border-color: var(--border);
   font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 16px;
 }
 
 input::placeholder,
