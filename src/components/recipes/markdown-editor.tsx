@@ -14,6 +14,8 @@ interface MarkdownEditorProps {
   onChange: (value: string) => void;
   label: string;
   placeholder?: string;
+  error?: string;
+  hint?: string;
 }
 
 function ToolbarButton({
@@ -42,6 +44,8 @@ export function MarkdownEditor({
   onChange,
   label,
   placeholder,
+  error,
+  hint,
 }: MarkdownEditorProps) {
   const [tab, setTab] = useState<"write" | "preview">("write");
   const editorRef = useRef<HTMLDivElement>(null);
@@ -105,7 +109,14 @@ export function MarkdownEditor({
   return (
     <div>
       <label className="block text-sm font-medium mb-1">{label}</label>
-      <div className="border rounded-md overflow-hidden">
+      {hint && (
+        <p className="text-xs text-[var(--muted-foreground)] mb-2">{hint}</p>
+      )}
+      <div
+        className={`border rounded-md overflow-hidden ${
+          error ? "border-red-500" : ""
+        }`}
+      >
         <div className="flex border-b bg-[var(--muted)]">
           <button
             type="button"
@@ -187,7 +198,11 @@ export function MarkdownEditor({
           </div>
         )}
       </div>
-      <p className="text-xs text-[var(--muted-foreground)] mt-1">Supports Markdown formatting</p>
+      {error ? (
+        <p className="text-sm text-red-500 mt-1">{error}</p>
+      ) : (
+        <p className="text-xs text-[var(--muted-foreground)] mt-1">Supports Markdown formatting</p>
+      )}
     </div>
   );
 }

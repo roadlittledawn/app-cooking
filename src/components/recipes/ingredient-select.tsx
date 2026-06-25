@@ -24,9 +24,10 @@ interface RecipeIngredient {
 interface IngredientSelectProps {
   ingredients: RecipeIngredient[];
   onChange: (ingredients: RecipeIngredient[]) => void;
+  error?: string;
 }
 
-export function IngredientSelect({ ingredients, onChange }: IngredientSelectProps) {
+export function IngredientSelect({ ingredients, onChange, error }: IngredientSelectProps) {
   const [selectedIngredient, setSelectedIngredient] = useState<IngredientOption | null>(null);
   const [currentAmount, setCurrentAmount] = useState("");
   const [currentUnit, setCurrentUnit] = useState("");
@@ -87,6 +88,8 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
   return (
     <div className="space-y-3">
       <label className="block text-sm font-medium">Ingredients</label>
+
+      {error && <p className="text-sm text-red-500">{error}</p>}
 
       {ingredients.length > 0 && (
         <ul className="space-y-2">
@@ -149,7 +152,7 @@ export function IngredientSelect({ ingredients, onChange }: IngredientSelectProp
                 minHeight: "34px",
                 fontSize: "0.875rem",
                 backgroundColor: "var(--card)",
-                borderColor: "var(--border)",
+                borderColor: error ? "#ef4444" : "var(--border)",
                 color: "var(--foreground)",
               }),
               menu: (base) => ({

@@ -30,7 +30,7 @@ const RecipeIngredientSchema = new Schema<IRecipeIngredient>(
       required: true,
     },
     amount: { type: String, required: true },
-    unit: { type: String, required: true },
+    unit: { type: String, default: "" },
   },
   { _id: false }
 );
@@ -38,7 +38,7 @@ const RecipeIngredientSchema = new Schema<IRecipeIngredient>(
 const RecipeSchema = new Schema<IRecipe>(
   {
     title: { type: String, required: true },
-    description: { type: String, required: true },
+    description: { type: String, default: "" },
     ingredients: { type: [RecipeIngredientSchema], default: [] },
     steps: { type: String, required: true },
     prepTime: { type: Number, required: true },
