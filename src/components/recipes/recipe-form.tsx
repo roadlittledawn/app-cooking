@@ -4,6 +4,9 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { MarkdownEditor } from "./markdown-editor";
 import { IngredientSelect } from "./ingredient-select";
+import { createRecipeSchema } from "@/lib/validations/recipe";
+
+type FieldErrors = Record<string, string[] | undefined>;
 
 interface RecipeIngredient {
   ingredientId: string;
@@ -17,8 +20,8 @@ interface RecipeFormData {
   description: string;
   ingredients: RecipeIngredient[];
   steps: string;
-  prepTime: number;
-  cookTime: number;
+  prepTime: number | "";
+  cookTime: number | "";
   servings: number;
   image: string | null;
   tags: string[];
@@ -36,8 +39,8 @@ const defaultData: RecipeFormData = {
   description: "",
   ingredients: [],
   steps: "",
-  prepTime: 0,
-  cookTime: 0,
+  prepTime: "",
+  cookTime: "",
   servings: 1,
   image: null,
   tags: [],
@@ -49,6 +52,7 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
   const [data, setData] = useState<RecipeFormData>({ ...defaultData, ...initialData });
   const [tagInput, setTagInput] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -74,26 +78,12 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
     setSuccess("");
-    setLoading(true);
 
-    let imageUrl = data.image;
-
-    if (imageFile) {
-      const form = new FormData();
-      form.append("file", imageFile);
-      const uploadRes = await fetch("/api/upload", { method: "POST", body: form });
-      if (!uploadRes.ok) {
-        const err = await uploadRes.json();
-        setError(err.error || "Image upload failed");
-        setLoading(false);
-        return;
-      }
-      const { url } = await uploadRes.json();
-      imageUrl = url;
-    }
-
-    const payload: Record<string, unknown> = {
+    // Validate against the shared schema before doing any work, so invalid
+    // fields are highlighted immediately without a network round trip.
+    const validation = createRecipeSchema.safeParse({
       title: data.title,
       description: data.description,
       steps: data.steps,
@@ -101,38 +91,73 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
       cookTime: data.cookTime,
       servings: data.servings,
       tags: data.tags,
-      image: imageUrl,
+      image: data.image,
       ingredients: data.ingredients.map(({ ingredientId, amount, unit }) => ({
         ingredientId,
         amount,
         unit,
       })),
-      ...(canSetFeatured && recipeId ? { featured: data.featured } : {}),
-    };
-
-    const url = isEdit ? `/api/recipes/${recipeId}` : "/api/recipes";
-    const method = isEdit ? "PUT" : "POST";
-
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
     });
 
-    setLoading(false);
-
-    if (!res.ok) {
-      const err = await res.json();
-      setError(err.error || "Something went wrong");
+    if (!validation.success) {
+      setFieldErrors(validation.error.flatten().fieldErrors);
+      setError("Please fix the highlighted fields below.");
       return;
     }
 
-    const recipe = await res.json();
-    if (isEdit) {
-      setSuccess("Recipe saved successfully.");
-    } else {
-      router.push(`/recipes/${recipe._id}`);
-      router.refresh();
+    setLoading(true);
+
+    try {
+      let imageUrl = data.image;
+
+      if (imageFile) {
+        const form = new FormData();
+        form.append("file", imageFile);
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: form });
+        if (!uploadRes.ok) {
+          const err = await uploadRes.json().catch(() => ({}));
+          setError(err.error || "Image upload failed");
+          setLoading(false);
+          return;
+        }
+        const { url } = await uploadRes.json();
+        imageUrl = url;
+      }
+
+      const payload: Record<string, unknown> = {
+        ...validation.data,
+        image: imageUrl,
+        ...(canSetFeatured && recipeId ? { featured: data.featured } : {}),
+      };
+
+      const url = isEdit ? `/api/recipes/${recipeId}` : "/api/recipes";
+      const method = isEdit ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        if (err.details) setFieldErrors(err.details);
+        setError(err.error || "Something went wrong. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      const recipe = await res.json();
+      if (isEdit) {
+        setSuccess("Recipe saved successfully.");
+        setLoading(false);
+      } else {
+        router.push(`/recipes/${recipe._id}`);
+        router.refresh();
+      }
+    } catch {
+      setError("Something went wrong while saving. Please try again.");
+      setLoading(false);
     }
   }
 
@@ -171,28 +196,39 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
           type="text"
           value={data.title}
           onChange={(e) => setData({ ...data, title: e.target.value })}
-          required
-          className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ${
+            fieldErrors.title
+              ? "border-red-500 focus:ring-red-500"
+              : "focus:ring-blue-500"
+          }`}
         />
+        {fieldErrors.title && (
+          <p className="mt-1 text-sm text-red-500">{fieldErrors.title[0]}</p>
+        )}
       </div>
 
       <MarkdownEditor
         label="Description"
         value={data.description}
         onChange={(description) => setData({ ...data, description })}
-        placeholder="Describe your recipe..."
+        placeholder="Tell the story behind this dish — where it came from, why you love it, when you like to serve it..."
+        hint="A short story or context about the dish, not the recipe itself. Cooking steps, timings, and ingredient swaps belong in Steps / Instructions below."
+        error={fieldErrors.description?.[0]}
       />
 
       <IngredientSelect
         ingredients={data.ingredients}
         onChange={(ingredients) => setData({ ...data, ingredients })}
+        error={fieldErrors.ingredients?.[0]}
       />
 
       <MarkdownEditor
         label="Steps / Instructions"
         value={data.steps}
         onChange={(steps) => setData({ ...data, steps })}
-        placeholder="Write your cooking steps in markdown..."
+        placeholder="Write the step-by-step cooking instructions in markdown..."
+        hint="How to make the dish: preparation and cooking steps, timings, and any ingredient substitutions or modifications."
+        error={fieldErrors.steps?.[0]}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -204,13 +240,22 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
             id="prepTime"
             type="number"
             min={0}
-            value={data.prepTime || ""}
-            placeholder="0"
+            value={data.prepTime}
             onChange={(e) =>
-              setData({ ...data, prepTime: parseInt(e.target.value) || 0 })
+              setData({
+                ...data,
+                prepTime: e.target.value === "" ? "" : parseInt(e.target.value),
+              })
             }
-            className="w-full border rounded-md px-3 py-2"
+            className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ${
+              fieldErrors.prepTime
+                ? "border-red-500 focus:ring-red-500"
+                : "focus:ring-blue-500"
+            }`}
           />
+          {fieldErrors.prepTime && (
+            <p className="mt-1 text-sm text-red-500">{fieldErrors.prepTime[0]}</p>
+          )}
         </div>
         <div>
           <label htmlFor="cookTime" className="block text-sm font-medium mb-1">
@@ -220,13 +265,22 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
             id="cookTime"
             type="number"
             min={0}
-            value={data.cookTime || ""}
-            placeholder="0"
+            value={data.cookTime}
             onChange={(e) =>
-              setData({ ...data, cookTime: parseInt(e.target.value) || 0 })
+              setData({
+                ...data,
+                cookTime: e.target.value === "" ? "" : parseInt(e.target.value),
+              })
             }
-            className="w-full border rounded-md px-3 py-2"
+            className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ${
+              fieldErrors.cookTime
+                ? "border-red-500 focus:ring-red-500"
+                : "focus:ring-blue-500"
+            }`}
           />
+          {fieldErrors.cookTime && (
+            <p className="mt-1 text-sm text-red-500">{fieldErrors.cookTime[0]}</p>
+          )}
         </div>
         <div>
           <label htmlFor="servings" className="block text-sm font-medium mb-1">

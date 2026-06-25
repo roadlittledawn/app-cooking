@@ -11,8 +11,14 @@ export const createRecipeSchema = z.object({
   description: z.string().optional().default(""),
   ingredients: z.array(recipeIngredientSchema).min(1, "At least one ingredient is required"),
   steps: z.string().min(1, "Steps are required"),
-  prepTime: z.number().int().min(0),
-  cookTime: z.number().int().min(0),
+  prepTime: z
+    .number({ invalid_type_error: "Prep time is required" })
+    .int()
+    .min(0),
+  cookTime: z
+    .number({ invalid_type_error: "Cook time is required" })
+    .int()
+    .min(0),
   servings: z.number().int().min(1),
   image: z.string().url().nullable().optional(),
   tags: z.array(z.string()).default([]),
