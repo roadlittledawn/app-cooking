@@ -11,8 +11,9 @@ Reference docs, in the clang-auth repo: `docs/integration-guide.md`, `docs/migra
 | Code (Parts 1–4) | **Done** on this branch. `tsc`, lint, `npm run test:auth` (19 tests) and `npm run build` pass, and the build lists `ƒ Proxy (Middleware)`. |
 | Migration script | **Done.** Tested against a throwaway local database (link, report, apply, idempotent rerun). |
 | Local checks, signed out | **Done.** Protected pages redirect to clang-auth with the right `redirect_uri`, `/login?callbackUrl=//evil.test` returns to `/`, and `/api/me` and protected APIs answer `401`. API writes with a foreign `Origin`, or with neither `Origin` nor `Referer`, get `403`; same-origin ones (by `Origin` or `Referer`) reach the handler. The old host gets a `308` to the new domain with path and query kept, and `/signup`, `/api/invites` and `/api/auth/*` are `404`. |
-| Local checks, signed in | **Not yet run.** It needs the local `cooking` app registered in local clang-auth (3.1). |
-| P0–P5 | Not started. |
+| Local checks, signed in | **Done** (2026-11-19, minted tokens against local clang-auth). `/api/me` returns the existing `User` linked by the migration; no duplicate is created, and the name syncs from the token. `/saved` lists the user's saved recipe, the owner sees Edit, and admin pages and APIs work. Save, unsave and featured all work same-origin, and the same request with a sibling-subdomain `Origin` gets `403`. A grant with no role gives `role: user` and `403` on admin APIs. No grant gives `403` on `/saved` and `/api/me` while the home page still loads. Not covered: the browser-only parts (the refresh timer, sign-out, and image upload to Blob). |
+| P2 | **Done 2026-11-19:** prod app `cooking` (origin `https://cooking.clintonlangosch.com`), with you granted `cooking → admin`. |
+| P0, P1, P3–P5 | Not started. |
 
 ## Goal
 
