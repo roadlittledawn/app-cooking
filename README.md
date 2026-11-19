@@ -1,6 +1,10 @@
 # app-cooking
 
-A cooking application
+A personal recipe collection, live at https://cooking.clintonlangosch.com. Next.js 16, MongoDB, Vercel.
+
+## Auth
+
+Sign-in uses the shared clang-auth service (`auth.clintonlangosch.com`). There's no sign-up page: users are invited with the clang-auth CLI. How it works, local setup and the migration from Auth.js are in [docs/clang-auth-migration.md](docs/clang-auth-migration.md). For local development, copy `.env.local.example` to `.env.local` and open the app at `http://cooking.localtest.me:3004` (`npx next dev -p 3004`).
 
 ## Getting Started
 

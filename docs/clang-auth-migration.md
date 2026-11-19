@@ -4,6 +4,16 @@ Branch: `feature/clang-auth-migration` (from `develop`). The PR targets `develop
 
 Reference docs, in the clang-auth repo: `docs/integration-guide.md`, `docs/migrating-apps.md` and `docs/how-it-works.md`. Lexicon (`web-wtq`) and the Knowledgebase (`app-knowledgebase`, `docs/clang-auth-migration.md`) were migrated the same way, and this plan reuses their patterns: the token helper, `authFetch`, the session hint, and the CSRF origin check.
 
+## Status
+
+| Part | State |
+|---|---|
+| Code (Parts 1–4) | **Done** on this branch. `tsc`, lint, `npm run test:auth` (19 tests) and `npm run build` pass, and the build lists `ƒ Proxy (Middleware)`. |
+| Migration script | **Done.** Tested against a throwaway local database (link, report, apply, idempotent rerun). |
+| Local checks, signed out | **Done.** Protected pages redirect to clang-auth with the right `redirect_uri`, `/login?callbackUrl=//evil.test` returns to `/`, and `/api/me` and protected APIs answer `401`. API writes with a foreign `Origin`, or with neither `Origin` nor `Referer`, get `403`; same-origin ones (by `Origin` or `Referer`) reach the handler. The old host gets a `308` to the new domain with path and query kept, and `/signup`, `/api/invites` and `/api/auth/*` are `404`. |
+| Local checks, signed in | **Not yet run.** It needs the local `cooking` app registered in local clang-auth (3.1). |
+| P0–P5 | Not started. |
+
 ## Goal
 
 - You sign in once at `https://auth.clintonlangosch.com` and are signed in to App Cooking and every other `*.clintonlangosch.com` app you have a grant for.
@@ -75,12 +85,12 @@ browser (cooking.clintonlangosch.com)
 
 | Step | Action |
 |---|---|
-| P0 | **List existing users**, so each person gets a clang-auth account with the **same email** as their `User` (that's what D6 links on). In `mongosh` against prod: `db.users.find({}, { email: 1, name: 1, role: 1, passwordHash: { $cond: [{ $ifNull: ["$passwordHash", false] }, "password", "google"] } })`. |
+| P0 | **List existing users**, so each person gets a clang-auth account with the **same email** as their `User` (that's what D6 links on). The prod `MONGODB_URI` has no database name in its path, so the data is in MongoDB's default database, **`test`**. Check that in Atlas before running anything. In `mongosh` against prod: `db.users.find({}, { email: 1, name: 1, role: 1, passwordHash: { $cond: [{ $ifNull: ["$passwordHash", false] }, "password", "google"] } })`. |
 | P1 | **Custom domain.** Vercel project → Settings → Domains → **Add Existing** `cooking.clintonlangosch.com`, *alongside* `app-cooking.vercel.app`. Add the `CNAME cooking → <target Vercel shows>` in Netlify DNS (`netlify api createDnsRecord`, zone `66351697a93f241eb3cbe686`). Wait for TLS, then check that `https://cooking.clintonlangosch.com/recipes` serves the current app. Check first that `cooking` is unused and that there are no CAA records (as done for `kb`). |
 | P2 | **Register with prod clang-auth.** Run the CLI from outside the clang-auth repo, so it uses the prod config: `clang-auth app create cooking --name Cooking --origin https://cooking.clintonlangosch.com`, then `clang-auth grant set <your email> cooking --role admin`. |
 | P3 | **Accounts for the other users** from P0: `clang-auth user create <their email> --name "<name>" --grant cooking`. If they already have a clang-auth account, use `clang-auth grant set <email> cooking` instead. The account must exist before P5, because P5 needs its ID. Sending the setup link (it expires after 72 h; `clang-auth user reset <email>` issues a new one) can wait until after cutover. Their recipes stay visible regardless. |
 | P4 | **Vercel env vars, Production and Preview:** `AUTH_BASE_URL=https://auth.clintonlangosch.com`, `AUTH_APP_SLUG=cooking`. Keep `AUTH_SECRET`, `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` until cleanup (C3), so Instant Rollback still has them. |
-| P5 | **Run the data migration** (1.11) against prod, after P2–P3 and before the release deploy. Export the mapping with `clang-auth --json user list --app cooking \| jq '[.[] \| {email, sub: .id}]' > /tmp/cooking-subs.json` (the JWT `sub` is the clang-auth user ID). Run `npm run migrate:clang-auth-sub -- /tmp/cooking-subs.json` (a dry run), review the report, then rerun with `--apply`. It's safe before cutover: the deployed code ignores the new field. |
+| P5 | **Run the data migration** (1.11) against prod, after P2–P3 and before the release deploy. Export the mapping with `clang-auth --json user list --app cooking \| jq '[.[] \| {email, sub: .id}]' > /tmp/cooking-subs.json` (the JWT `sub` is the clang-auth user ID). Run `MONGODB_URI='<prod URI>' npm run migrate:clang-auth-sub -- /tmp/cooking-subs.json` (a dry run). The first line it prints is the database name; it should be the one from P0. Review the report, then rerun with `--apply`. It's safe before cutover: the deployed code ignores the new field. |
 
 ## Part 1: server side
 
@@ -126,7 +136,7 @@ browser (cooking.clintonlangosch.com)
 ## Rollout
 
 1. **P0–P5.** The new domain serves the current app and every existing `User` has its `clangAuthSub`; nothing changes for users.
-2. **Merge to `develop`, then release to `main`.** The release deploy is the cutover: the new code, and the `301` from `app-cooking.vercel.app`.
+2. **Merge to `develop`, then release to `main`.** The release deploy is the cutover: the new code, and the `308` from `app-cooking.vercel.app`.
 3. **Verify (V1)** on `https://cooking.clintonlangosch.com`.
 4. **P3** if not done yet: send the other users their setup links.
 5. **Rollback** if needed: Vercel → Deployments → the previous production deployment → Instant Rollback. The old code, old env and bcrypt hashes are all still there until cleanup.
@@ -144,7 +154,7 @@ browser (cooking.clintonlangosch.com)
 - [ ] Wait more than 15 minutes (or delete `ca_access` in devtools), then save a recipe: `authFetch` refreshes silently.
 - [ ] Sign out signs you out here and in other `*.clintonlangosch.com` apps.
 - [ ] A cross-origin `POST` to `/api/saved/<id>` with a foreign `Origin` returns `403`.
-- [ ] `curl -sI 'https://app-cooking.vercel.app/recipes?x=1'` → `301` to `https://cooking.clintonlangosch.com/recipes?x=1`.
+- [ ] `curl -sI 'https://app-cooking.vercel.app/recipes?x=1'` → `308` (Next's permanent redirect) to `https://cooking.clintonlangosch.com/recipes?x=1`.
 - [ ] Devtools shows `ca_access` with domain `.clintonlangosch.com`, `HttpOnly`, `Secure`.
 - [ ] `npm run test:auth`, `npm run lint`, `npx tsc --noEmit` and `npm run build` pass, and the build output lists `ƒ Proxy (Middleware)`.
 
@@ -162,7 +172,7 @@ browser (cooking.clintonlangosch.com)
 | Risk | Mitigation |
 |---|---|
 | A person's clang-auth email differs from the one on their `User`. | The P5 dry run shows them as unmatched on both sides before anything is written. Edit that entry's email in the mapping file to match the `User`, and rerun. |
-| Someone was missed and signs in before being mapped, so they get a fresh, empty `User`. | Delete the empty `User`, add them to the mapping, and rerun the script. |
+| Someone was missed and signs in before being mapped. | Their email already exists on a `User`, so creating a new one fails, and `getCurrentUser()` throws an error that names the migration script. They see an error page, not an empty account or a redirect loop. Add them to the mapping and rerun the script. |
 | Two clang-auth users would claim the same `User`. | The script refuses conflicts, and the unique index backs it up. |
 | A former Google user expects the Google button. | Tell them in the setup-link message. Google returns via #3. |
 | The proxy imports Mongoose. | 1.2 keeps the token helper DB-free. Role checks that need the DB stay in layouts and handlers. |
@@ -170,7 +180,6 @@ browser (cooking.clintonlangosch.com)
 ## Commit sequence on this branch
 
 1. This plan.
-2. Token helper, `getCurrentUser()` and its helpers, `User.clangAuthSub`, the migration script, and the test script with its CI step (1.1–1.4, 1.11, 3.5).
-3. Switch to clang-auth in one commit: call sites, proxy, admin layout, `/api/me`, the client provider, header, `authFetch`, `/login`, and the Auth.js removal (1.5–1.9, 2.1–2.5, 3.4). Split halves would leave a broken app, as kb found.
-4. Old-domain redirect and the local dev origin (1.10, 3.3).
-5. Docs (Part 4).
+2. Token helper, `getCurrentUser()` and its helpers, `User.clangAuthSub`, the migration script, and the test script with its CI step (1.1–1.4, 1.11, 3.5). The dependency swap (`next-auth`/`bcrypt` → `jose`) landed here too, so this commit alone doesn't build.
+3. Switch to clang-auth in one commit: call sites, proxy, admin layout, `/api/me`, the client provider, header, `authFetch`, `/login`, the Auth.js removal, the old-domain redirect and the local dev origin (1.5–1.10, 2.1–2.5, 3.3, 3.4). Split halves would leave a broken app, as kb found.
+4. Docs (Part 4) and this plan's status.
