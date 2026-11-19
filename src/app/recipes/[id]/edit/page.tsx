@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getCurrentUser, loginUrlFor } from "@/lib/auth/current-user";
 import { connectDB } from "@/lib/db";
 import { Recipe } from "@/models/Recipe";
 import { RecipeForm } from "@/components/recipes/recipe-form";
@@ -9,11 +9,11 @@ interface EditRecipePageProps {
 }
 
 export default async function EditRecipePage({ params }: EditRecipePageProps) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
-  const isAdmin = (session.user as { role?: string }).role === "admin";
-
   const { id } = await params;
+  const user = await getCurrentUser();
+  if (!user) redirect(await loginUrlFor(`/recipes/${id}/edit`));
+  const isAdmin = user.role === "admin";
+
   await connectDB();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

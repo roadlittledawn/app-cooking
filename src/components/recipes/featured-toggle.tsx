@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { authFetch } from "@/lib/auth/client";
 
 interface FeaturedToggleProps {
   recipeId: string;
@@ -18,7 +19,7 @@ export function FeaturedToggle({ recipeId, initialFeatured }: FeaturedToggleProp
     const next = !featured;
     setFeatured(next);
     try {
-      const res = await fetch(`/api/recipes/${recipeId}/featured`, {
+      const res = await authFetch(`/api/recipes/${recipeId}/featured`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ featured: next }),

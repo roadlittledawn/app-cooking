@@ -1,23 +1,14 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/current-user";
 import { connectDB } from "@/lib/db";
 import { Tag } from "@/models/Tag";
 import { Recipe } from "@/models/Recipe";
-import { User } from "@/models/User";
 import { createTagSchema, renameTagSchema } from "@/lib/validations/tag";
 
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user) return null;
-  await connectDB();
-  const dbUser = await User.findById(session.user.id);
-  if (!dbUser || dbUser.role !== "admin") return null;
-  return dbUser;
-}
-
 export async function GET() {
-  const admin = await requireAdmin();
-  if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const { response } = await requireAdmin();
+  if (response) return response;
+  await connectDB();
 
   const [recipeTags, tagDocs, recipeCounts] = await Promise.all([
     Recipe.distinct("tags"),
@@ -50,8 +41,9 @@ export async function GET() {
 
 // Upsert a Tag doc by name (used to enable a tag for filter control)
 export async function POST(request: Request) {
-  const admin = await requireAdmin();
-  if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const { response } = await requireAdmin();
+  if (response) return response;
+  await connectDB();
 
   const body = await request.json();
   const parsed = createTagSchema.safeParse(body);
@@ -73,8 +65,9 @@ export async function POST(request: Request) {
 
 // Rename a tag by name — used when no Tag doc exists yet
 export async function PATCH(request: Request) {
-  const admin = await requireAdmin();
-  if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const { response } = await requireAdmin();
+  if (response) return response;
+  await connectDB();
 
   const body = await request.json();
   const parsed = renameTagSchema.safeParse(body);

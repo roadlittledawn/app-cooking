@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Heart } from "lucide-react";
+import { authFetch } from "@/lib/auth/client";
 
 interface SaveButtonProps {
   recipeId: string;
@@ -16,7 +17,7 @@ export function SaveButton({ recipeId, initialSaved }: SaveButtonProps) {
   async function toggleSave() {
     setLoading(true);
     const method = saved ? "DELETE" : "POST";
-    const res = await fetch(`/api/saved/${recipeId}`, { method });
+    const res = await authFetch(`/api/saved/${recipeId}`, { method });
 
     if (res.ok) {
       const next = !saved;
