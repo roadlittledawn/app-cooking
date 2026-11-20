@@ -38,7 +38,7 @@ export default function RootLayout({
       className={`${playfair.variable} ${dmSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Providers>
+        <Providers authBaseUrl={process.env.AUTH_BASE_URL ?? ""}>
           <Header />
           <main className="flex-1">{children}</main>
         </Providers>

@@ -6,7 +6,7 @@ import remarkBreaks from "remark-breaks";
 import { Pencil } from "lucide-react";
 import { connectDB } from "@/lib/db";
 import { Recipe } from "@/models/Recipe";
-import { auth } from "@/auth";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { SaveButton } from "@/components/recipes/save-button";
 import { SavedRecipe } from "@/models/SavedRecipe";
 
@@ -44,13 +44,13 @@ export default async function RecipePage({ params }: RecipePageProps) {
 
   if (!recipe) notFound();
 
-  const session = await auth();
-  const isOwner = session?.user?.id === recipe.authorId?._id?.toString();
+  const user = await getCurrentUser();
+  const isOwner = !!user && user.id === recipe.authorId?._id?.toString();
 
   let isSaved = false;
-  if (session?.user) {
+  if (user) {
     const saved = await SavedRecipe.findOne({
-      userId: session.user.id,
+      userId: user.id,
       recipeId: id,
     });
     isSaved = !!saved;
@@ -62,7 +62,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
         {recipe.title}
       </h1>
       <div className="flex items-center gap-2 mb-4">
-        {session?.user && <SaveButton recipeId={id} initialSaved={isSaved} />}
+        {user && <SaveButton recipeId={id} initialSaved={isSaved} />}
         {isOwner && (
           <Link
             href={`/recipes/${id}/edit`}

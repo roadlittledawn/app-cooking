@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireUser } from "@/lib/auth/current-user";
 import { connectDB } from "@/lib/db";
 import { Ingredient } from "@/models/Ingredient";
 import { createIngredientSchema } from "@/lib/validations/ingredient";
@@ -23,10 +23,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { user, response } = await requireUser();
+  if (response) return response;
 
   const body = await request.json();
   const parsed = createIngredientSchema.safeParse(body);
@@ -48,7 +46,7 @@ export async function POST(request: Request) {
 
   const ingredient = await Ingredient.create({
     name,
-    createdBy: session.user.id,
+    createdBy: user.id,
   });
 
   return NextResponse.json(ingredient, { status: 201 });

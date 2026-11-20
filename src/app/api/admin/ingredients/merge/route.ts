@@ -1,23 +1,16 @@
 import { NextResponse } from "next/server";
 import { Types } from "mongoose";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/current-user";
 import { connectDB } from "@/lib/db";
 import { Ingredient } from "@/models/Ingredient";
 import { Recipe } from "@/models/Recipe";
-import { User } from "@/models/User";
 import { mergeIngredientSchema } from "@/lib/validations/ingredient";
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { response } = await requireAdmin();
+  if (response) return response;
 
   await connectDB();
-  const dbUser = await User.findById(session.user.id);
-  if (!dbUser || dbUser.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
 
   const body = await request.json();
   const parsed = mergeIngredientSchema.safeParse(body);

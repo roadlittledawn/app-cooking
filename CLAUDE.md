@@ -2,38 +2,25 @@
 
 ## Tech Stack
 
-- **API Contract:** OpenAPI 3.x (path depends on contract component name in `sdd/sdd-settings.yaml`)
-- **Backend:** Node.js 20, TypeScript 5, Express (CMDO architecture)
-- **Frontend:** React 19, TypeScript 5.9, Vite (MVVM architecture)
-- **Database:** PostgreSQL 15
-- **Testing:** Vitest (unit), Testkube (integration/E2E)
-- **Deployment:** Kubernetes, Helm
+- **App:** Next.js 16 (App Router), React 19, TypeScript 5, Tailwind CSS 4
+- **Database:** MongoDB via Mongoose (`src/models/`)
+- **Auth:** clang-auth (`https://auth.clintonlangosch.com`), shared sign-in for `*.clintonlangosch.com` apps. See [Authentication](#authentication).
+- **Images:** Vercel Blob
+- **Hosting:** Vercel, at `https://cooking.clintonlangosch.com` (the old `app-cooking.vercel.app` redirects there)
+- **Tests:** `npm run test:auth` (a plain `tsx` script with `node:assert`; there's no test framework)
 
-## Components
+> The SDD scaffold sections further down (components, CMDO, Kubernetes) describe the template this repo was generated from, not the app as built.
 
-| Component | Path | Purpose |
-|-----------|------|---------|
-| Config | `components/config/` | Environment configuration (mandatory singleton) |
-| Contract | `components/contracts/{name}/` | OpenAPI spec, type generation |
-| Server | `components/servers/{name}/` | Backend (CMDO architecture) |
-| Webapp | `components/webapps/{name}/` | React frontend (MVVM) |
-| Database | `components/databases/{name}/` | PostgreSQL migrations and seeds |
-| Helm | `components/helm_charts/{name}/` | Kubernetes deployment |
-| Testing | `components/testing/{name}/` | Testkube test definitions |
+## Authentication
 
-Component directories follow the pattern `components/{type-plural}/{name}/` (e.g., `components/contracts/public-api/`, `components/servers/main/`).
+Sign-in is handled by clang-auth. The app never sees a password. It verifies the `ca_access` cookie (a 15-minute ES256 JWT) against clang-auth's JWKS. The full design and rollout are in [docs/clang-auth-migration.md](docs/clang-auth-migration.md).
 
-## Backend Architecture (CMDO)
-
-**C**ontroller **M**odel **D**AL **O**perator - strict separation of concerns:
-
-```
-Operator → Controller → Model Use Cases
-   ↓            ↓              ↑
-Config → [All layers] → Dependencies
-                              ↓
-                            DAL
-```
+- **The only supported auth checks** are in `src/lib/auth/current-user.ts`: `getCurrentUser()` for pages and server components, `requireUser()` / `requireAdmin()` for route handlers (they return the `401`/`403` response to send). Don't read the cookie yourself.
+- **`CurrentUser.id` is the local `User._id`**, which recipes, saved recipes and ingredients reference. The token's `sub` maps to it through `User.clangAuthSub`. Never look users up by email.
+- **Roles come from the clang-auth grant:** `apps.cooking` containing `admin` means admin; any other grant means a regular user. No `cooking` grant means no access.
+- **Adding a user:** `clang-auth user create <email> --name "<name>" --grant cooking` (add `:admin` for an admin), then send them the setup link. There's no sign-up page.
+- `src/proxy.ts` redirects signed-out visitors on protected pages to clang-auth and refuses cross-origin API writes. Browser code calls protected APIs with `authFetch()` from `src/lib/auth/client.ts`, which refreshes the token on a `401`.
+- **Local dev:** run the clang-auth service locally (`http://auth.localtest.me:4000`), then `npx next dev -p 3004` and open `http://cooking.localtest.me:3004`. `localhost` doesn't get the cookie. Point `MONGODB_URI` at a local database: `.env.local` may point at production.
 
 ## Coding Standards (MANDATORY)
 

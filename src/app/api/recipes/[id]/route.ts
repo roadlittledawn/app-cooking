@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireUser } from "@/lib/auth/current-user";
 import { connectDB } from "@/lib/db";
 import { Recipe } from "@/models/Recipe";
 import { updateRecipeSchema } from "@/lib/validations/recipe";
@@ -28,10 +28,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { user, response } = await requireUser();
+  if (response) return response;
 
   await connectDB();
 
@@ -39,7 +37,7 @@ export async function PUT(
   if (!recipe) {
     return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
   }
-  if (recipe.authorId.toString() !== session.user.id) {
+  if (recipe.authorId.toString() !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -62,10 +60,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { user, response } = await requireUser();
+  if (response) return response;
 
   await connectDB();
 
@@ -73,7 +69,7 @@ export async function DELETE(
   if (!recipe) {
     return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
   }
-  if (recipe.authorId.toString() !== session.user.id) {
+  if (recipe.authorId.toString() !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

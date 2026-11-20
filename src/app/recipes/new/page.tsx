@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getCurrentUser, loginUrlFor } from "@/lib/auth/current-user";
 import { RecipeForm } from "@/components/recipes/recipe-form";
 
 export default async function NewRecipePage() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const user = await getCurrentUser();
+  if (!user) redirect(await loginUrlFor("/recipes/new"));
 
   return (
     <div className="max-w-4xl mx-auto p-8">

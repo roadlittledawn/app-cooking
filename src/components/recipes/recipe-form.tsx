@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { MarkdownEditor } from "./markdown-editor";
 import { IngredientSelect } from "./ingredient-select";
 import { createRecipeSchema } from "@/lib/validations/recipe";
+import { authFetch } from "@/lib/auth/client";
 
 type FieldErrors = Record<string, string[] | undefined>;
 
@@ -113,7 +114,7 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
       if (imageFile) {
         const form = new FormData();
         form.append("file", imageFile);
-        const uploadRes = await fetch("/api/upload", { method: "POST", body: form });
+        const uploadRes = await authFetch("/api/upload", { method: "POST", body: form });
         if (!uploadRes.ok) {
           const err = await uploadRes.json().catch(() => ({}));
           setError(err.error || "Image upload failed");
@@ -133,7 +134,7 @@ export function RecipeForm({ initialData, recipeId, canSetFeatured }: RecipeForm
       const url = isEdit ? `/api/recipes/${recipeId}` : "/api/recipes";
       const method = isEdit ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res = await authFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
