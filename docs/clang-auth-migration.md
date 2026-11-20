@@ -13,7 +13,12 @@ Reference docs, in the clang-auth repo: `docs/integration-guide.md`, `docs/migra
 | Local checks, signed out | **Done.** Protected pages redirect to clang-auth with the right `redirect_uri`, `/login?callbackUrl=//evil.test` returns to `/`, and `/api/me` and protected APIs answer `401`. API writes with a foreign `Origin`, or with neither `Origin` nor `Referer`, get `403`; same-origin ones (by `Origin` or `Referer`) reach the handler. The old host gets a `308` to the new domain with path and query kept, and `/signup`, `/api/invites` and `/api/auth/*` are `404`. |
 | Local checks, signed in | **Done** (2026-11-19, minted tokens against local clang-auth). `/api/me` returns the existing `User` linked by the migration; no duplicate is created, and the name syncs from the token. `/saved` lists the user's saved recipe, the owner sees Edit, and admin pages and APIs work. Save, unsave and featured all work same-origin, and the same request with a sibling-subdomain `Origin` gets `403`. A grant with no role gives `role: user` and `403` on admin APIs. No grant gives `403` on `/saved` and `/api/me` while the home page still loads. Not covered: the browser-only parts (the refresh timer, sign-out, and image upload to Blob). |
 | P2 | **Done 2026-11-19:** prod app `cooking` (origin `https://cooking.clintonlangosch.com`), with you granted `cooking → admin`. |
-| P0, P1, P3–P5 | Not started. |
+| Merge to `develop` | **Done 2026-11-20** (PR #28). |
+| P0 | **Done 2026-11-20.** Prod data is in database `test`: 3 users, none linked yet. The owner (admin, password) has 9 recipes, 5 saved and 50 ingredients. The two other users (role `user`) have 1 recipe each; one signed in with a password, the other only with Google. |
+| P3 | **Accounts created 2026-11-20, setup links not sent.** The other two users have clang-auth accounts with the same emails as their `User`, granted `cooking` (role `user`, as before). They can't sign in until they set a password, so nothing changes for them yet. See [Adding the other users later](#adding-the-other-users-later). |
+| P1 | **Done 2026-11-20.** Domain added to the Vercel project, and Netlify DNS CNAME `cooking → 220b62ff0e8ca24c.vercel-dns-017.com`. TLS was issued within about a minute; the domain serves the current production app until the release. |
+| P4 | **Done 2026-11-20.** `AUTH_BASE_URL` and `AUTH_APP_SLUG` set in Vercel. |
+| P5 | **Done 2026-11-20.** Dry run against database `test`: 3 to link, no conflicts, nobody unmatched. Applied (3 of 3 written, unique index created); a rerun shows all 3 already linked. |
 
 ## Goal
 
@@ -139,9 +144,20 @@ browser (cooking.clintonlangosch.com)
 1. **P0–P5.** The new domain serves the current app and every existing `User` has its `clangAuthSub`; nothing changes for users.
 2. **Merge to `develop`, then release to `main`.** The release deploy is the cutover: the new code, and the `308` from `app-cooking.vercel.app`.
 3. **Verify (V1)** on `https://cooking.clintonlangosch.com`.
-4. **P3** if not done yet: send the other users their setup links.
+4. **P3:** send the other users their setup links when they want in (see [Adding the other users later](#adding-the-other-users-later)).
 5. **Rollback** if needed: Vercel → Deployments → the previous production deployment → Instant Rollback. The old code, old env and bcrypt hashes are all still there until cleanup.
 6. **Cleanup** after a couple of weeks (C1–C4).
+
+## Adding the other users later
+
+The other two users' clang-auth accounts exist and are already linked to their `User` by P5, so their recipes, ingredients and saved recipe are attached. Nothing else is needed in this app. To let one of them in:
+
+1. **Send a setup link:** `clang-auth user reset <email>` prints a fresh one-time link (it expires after 72 h; rerun for another). They set a password and sign in. A user who only ever used Google gets a password account for now; Google comes back through clang-auth (roadlittledawn/service-clang-auth-claude#3).
+2. **Optional, admin:** `clang-auth grant set <email> cooking:admin`. See the ownership note below first.
+
+For someone new who has no `User` yet, just create their account with `--grant cooking`; a `User` is created on first sign-in. For someone who has a `User` but no clang-auth account, create the account and rerun the migration (P5) before they sign in; otherwise they get an error page that names the migration script.
+
+**Ownership is still open.** Today only a recipe's author can edit or delete it: `PUT` and `DELETE` in `src/app/api/recipes/[id]/route.ts` compare `authorId` with the user and don't check the role, so even admins can't edit someone else's recipe. Admin (the `cooking:admin` grant, D5) only adds the admin pages (ingredients, tags) and the featured toggle. Letting the other users edit any recipe therefore needs a code change, for example "the author or an admin" in those two handlers, plus showing Edit on the recipe page by the same rule. The edit page itself (`src/app/recipes/[id]/edit/page.tsx`) checks only that someone is signed in, not ownership; the API refuses the save. This predates the migration. Decide the rule before granting admin.
 
 ## Verification (V1)
 
