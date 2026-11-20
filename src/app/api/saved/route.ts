@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireUser } from "@/lib/auth/current-user";
 import { connectDB } from "@/lib/db";
 import { SavedRecipe } from "@/models/SavedRecipe";
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { user, response } = await requireUser();
+  if (response) return response;
 
   await connectDB();
 
-  const saved = await SavedRecipe.find({ userId: session.user.id })
+  const saved = await SavedRecipe.find({ userId: user.id })
     .sort({ savedAt: -1 })
     .populate({
       path: "recipeId",

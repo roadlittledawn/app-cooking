@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { useAuth } from "@/components/layout/auth-provider";
 import { useState, useRef, useEffect } from "react";
 import {
   UtensilsCrossed,
   PlusCircle,
-  Mail,
   Carrot,
   Tag,
   Menu,
@@ -19,12 +18,10 @@ import {
 } from "lucide-react";
 
 export function Header() {
-  const { data: session } = useSession();
+  const { user, isAdmin, signIn, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<"admin" | "account" | null>(null);
   const desktopNavRef = useRef<HTMLElement>(null);
-
-  const isAdmin = (session?.user as { role?: string })?.role === "admin";
 
   useEffect(() => {
     function handleOutsideClick(e: MouseEvent) {
@@ -42,11 +39,10 @@ export function Header() {
 
   const mainLinks = [
     { href: "/recipes", label: "Recipes", icon: UtensilsCrossed },
-    ...(session?.user ? [{ href: "/recipes/new", label: "New Recipe", icon: PlusCircle }] : []),
+    ...(user ? [{ href: "/recipes/new", label: "New Recipe", icon: PlusCircle }] : []),
   ];
 
   const adminLinks = [
-    { href: "/admin/invites", label: "Invites", icon: Mail },
     { href: "/admin/ingredients", label: "Ingredients", icon: Carrot },
     { href: "/admin/tags", label: "Tags", icon: Tag },
   ];
@@ -114,14 +110,14 @@ export function Header() {
           )}
 
           {/* Account dropdown / Sign in */}
-          {session?.user ? (
+          {user ? (
             <div className="relative pl-4 border-l border-[var(--border)]">
               <button
                 onClick={() => toggleDropdown("account")}
                 className="flex items-center gap-1.5 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors duration-150"
               >
                 <User className="w-3.5 h-3.5 shrink-0" />
-                <span className="max-w-[100px] truncate">{session.user.name}</span>
+                <span className="max-w-[100px] truncate">{user.name}</span>
                 <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${openDropdown === "account" ? "rotate-180" : ""}`} />
               </button>
               {openDropdown === "account" && (
@@ -139,7 +135,8 @@ export function Header() {
                   ))}
                   <div className="border-t border-[var(--border)] mt-1 pt-1">
                     <button
-                      onClick={() => { signOut(); setOpenDropdown(null); }}
+                      onClick={() => { void signOut(); setOpenDropdown(null); }}
+                      title="Signs you out of all clintonlangosch.com apps"
                       className={dropdownItemClass}
                     >
                       <LogOut className="w-3.5 h-3.5 shrink-0" />
@@ -150,24 +147,24 @@ export function Header() {
               )}
             </div>
           ) : (
-            <Link
-              href="/login"
+            <button
+              onClick={signIn}
               className="text-sm bg-[var(--accent)] text-white px-4 py-1.5 rounded-sm hover:bg-[var(--accent-dark)] transition-colors duration-150 tracking-wide"
             >
               Sign in
-            </Link>
+            </button>
           )}
         </nav>
 
         {/* Mobile toggle */}
         <div className="flex md:hidden items-center gap-3">
-          {!session?.user && (
-            <Link
-              href="/login"
+          {!user && (
+            <button
+              onClick={signIn}
               className="text-sm bg-[var(--accent)] text-white px-3 py-1.5 rounded-sm hover:bg-[var(--accent-dark)] transition-colors duration-150"
             >
               Sign in
-            </Link>
+            </button>
           )}
           <button
             onClick={() => setMobileOpen((o) => !o)}
@@ -211,10 +208,10 @@ export function Header() {
             </div>
           )}
 
-          {session?.user && (
+          {user && (
             <div className="mt-3 pt-3 border-t border-[var(--border)] flex flex-col gap-1">
               <span className="text-xs text-[var(--muted-foreground)] uppercase tracking-wider mb-1 truncate">
-                {session.user.name}
+                {user.name}
               </span>
               {accountLinks.map((link) => (
                 <Link
@@ -228,7 +225,8 @@ export function Header() {
                 </Link>
               ))}
               <button
-                onClick={() => { signOut(); setMobileOpen(false); }}
+                onClick={() => { void signOut(); setMobileOpen(false); }}
+                title="Signs you out of all clintonlangosch.com apps"
                 className="flex items-center gap-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors py-2"
               >
                 <LogOut className="w-4 h-4" />

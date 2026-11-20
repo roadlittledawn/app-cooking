@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { authFetch } from "@/lib/auth/client";
 
 interface Ingredient {
   _id: string;
@@ -35,7 +36,7 @@ export default function AdminIngredientsPage() {
   const fetchIngredients = useCallback(async (page: number, q: string) => {
     const params = new URLSearchParams({ page: String(page), limit: "20" });
     if (q) params.set("q", q);
-    const res = await fetch(`/api/admin/ingredients?${params}`);
+    const res = await authFetch(`/api/admin/ingredients?${params}`);
     if (res.ok) {
       const data = await res.json();
       setIngredients(data.ingredients);
@@ -71,7 +72,7 @@ export default function AdminIngredientsPage() {
     setSuccess("");
     setLoading(true);
 
-    const res = await fetch(`/api/admin/ingredients/${id}`, {
+    const res = await authFetch(`/api/admin/ingredients/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: editName }),
@@ -95,7 +96,7 @@ export default function AdminIngredientsPage() {
     setSuccess("");
     setLoading(true);
 
-    const res = await fetch(`/api/admin/ingredients/${id}`, { method: "DELETE" });
+    const res = await authFetch(`/api/admin/ingredients/${id}`, { method: "DELETE" });
     const data = await res.json();
     setLoading(false);
 
@@ -118,7 +119,7 @@ export default function AdminIngredientsPage() {
     setSuccess("");
     setLoading(true);
 
-    const res = await fetch("/api/admin/ingredients/merge", {
+    const res = await authFetch("/api/admin/ingredients/merge", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sourceId: mergeSource, targetId: mergeTarget }),

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireUser } from "@/lib/auth/current-user";
 import { connectDB } from "@/lib/db";
 import { SavedRecipe } from "@/models/SavedRecipe";
 import { Recipe } from "@/models/Recipe";
@@ -9,10 +9,8 @@ export async function POST(
   { params }: { params: Promise<{ recipeId: string }> }
 ) {
   const { recipeId } = await params;
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { user, response } = await requireUser();
+  if (response) return response;
 
   await connectDB();
 
@@ -22,7 +20,7 @@ export async function POST(
   }
 
   const existing = await SavedRecipe.findOne({
-    userId: session.user.id,
+    userId: user.id,
     recipeId,
   });
 
@@ -31,7 +29,7 @@ export async function POST(
   }
 
   await SavedRecipe.create({
-    userId: session.user.id,
+    userId: user.id,
     recipeId,
   });
 
@@ -43,15 +41,13 @@ export async function DELETE(
   { params }: { params: Promise<{ recipeId: string }> }
 ) {
   const { recipeId } = await params;
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { user, response } = await requireUser();
+  if (response) return response;
 
   await connectDB();
 
   await SavedRecipe.findOneAndDelete({
-    userId: session.user.id,
+    userId: user.id,
     recipeId,
   });
 

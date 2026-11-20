@@ -1,6 +1,6 @@
 import type { Types } from "mongoose";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getCurrentUser, loginUrlFor } from "@/lib/auth/current-user";
 import { connectDB } from "@/lib/db";
 import { SavedRecipe } from "@/models/SavedRecipe";
 import { RecipeCard } from "@/components/recipes/recipe-card";
@@ -19,12 +19,12 @@ interface LeanSavedRecipe {
 }
 
 export default async function SavedRecipesPage() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const user = await getCurrentUser();
+  if (!user) redirect(await loginUrlFor("/saved"));
 
   await connectDB();
 
-  const savedRecipes = await SavedRecipe.find({ userId: session.user.id })
+  const savedRecipes = await SavedRecipe.find({ userId: user.id })
     .sort({ savedAt: -1 })
     .populate({
       path: "recipeId",

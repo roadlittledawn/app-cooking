@@ -7,17 +7,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "npx tsx scripts/seed.ts",
-    "reset-admin": "npx tsx scripts/reset-admin.ts"
+    "test:auth": "tsx scripts/test/auth.test.ts",
+    "migrate:clang-auth-sub": "tsx scripts/migrate-clang-auth-sub.ts"
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.19",
     "@vercel/blob": "^2.3.3",
-    "bcrypt": "^6",
+    "jose": "^6.2.18",
     "lucide-react": "^1.16.0",
     "mongoose": "^8",
     "next": "16.2.6",
-    "next-auth": "5.0.0-beta.31",
     "prismjs": "^1.30.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -30,7 +29,6 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/bcrypt": "^5",
     "@types/node": "^20",
     "@types/prismjs": "^1.26.6",
     "@types/react": "^19",

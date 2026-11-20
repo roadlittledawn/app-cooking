@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { authFetch } from "@/lib/auth/client";
 
 interface TagRow {
   name: string;
@@ -19,7 +20,7 @@ export default function AdminTagsPage() {
   const [success, setSuccess] = useState("");
 
   const fetchTags = useCallback(async () => {
-    const res = await fetch("/api/admin/tags");
+    const res = await authFetch("/api/admin/tags");
     if (res.ok) {
       const data = await res.json();
       setTags(data.tags);
@@ -37,7 +38,7 @@ export default function AdminTagsPage() {
     setLoading(true);
 
     if (!tag.tagId) {
-      const res = await fetch("/api/admin/tags", {
+      const res = await authFetch("/api/admin/tags", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: tag.name, showInFilter: true }),
@@ -49,7 +50,7 @@ export default function AdminTagsPage() {
         return;
       }
     } else {
-      const res = await fetch(`/api/admin/tags/${tag.tagId}`, {
+      const res = await authFetch(`/api/admin/tags/${tag.tagId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ showInFilter: !tag.showInFilter }),
@@ -82,12 +83,12 @@ export default function AdminTagsPage() {
     setLoading(true);
 
     const res = tag.tagId
-      ? await fetch(`/api/admin/tags/${tag.tagId}`, {
+      ? await authFetch(`/api/admin/tags/${tag.tagId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: editValue }),
         })
-      : await fetch("/api/admin/tags", {
+      : await authFetch("/api/admin/tags", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: tag.name, newName: editValue }),
@@ -110,7 +111,7 @@ export default function AdminTagsPage() {
     setError("");
     setLoading(true);
 
-    const res = await fetch(`/api/admin/tags/${tagId}`, { method: "DELETE" });
+    const res = await authFetch(`/api/admin/tags/${tagId}`, { method: "DELETE" });
     const data = await res.json();
     setLoading(false);
 

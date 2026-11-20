@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import { authFetch } from "@/lib/auth/client";
 
 const AsyncCreatableSelect = dynamic(
   () => import("react-select/async-creatable"),
@@ -50,7 +51,7 @@ export function IngredientSelect({ ingredients, onChange, error }: IngredientSel
     }
 
     if (opt.__isNew__) {
-      const res = await fetch("/api/ingredients", {
+      const res = await authFetch("/api/ingredients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: opt.label }),

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireUser } from "@/lib/auth/current-user";
 import { connectDB } from "@/lib/db";
 import { Recipe } from "@/models/Recipe";
 import { createRecipeSchema } from "@/lib/validations/recipe";
@@ -50,10 +50,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { user, response } = await requireUser();
+  if (response) return response;
 
   const body = await request.json();
   const parsed = createRecipeSchema.safeParse(body);
@@ -69,7 +67,7 @@ export async function POST(request: Request) {
 
   const recipe = await Recipe.create({
     ...parsed.data,
-    authorId: session.user.id,
+    authorId: user.id,
   });
 
   return NextResponse.json(recipe, { status: 201 });

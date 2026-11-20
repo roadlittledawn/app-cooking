@@ -1,26 +1,17 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/current-user";
 import { connectDB } from "@/lib/db";
 import { Tag } from "@/models/Tag";
 import { Recipe } from "@/models/Recipe";
-import { User } from "@/models/User";
 import { updateTagSchema } from "@/lib/validations/tag";
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user) return null;
-  await connectDB();
-  const dbUser = await User.findById(session.user.id);
-  if (!dbUser || dbUser.role !== "admin") return null;
-  return dbUser;
-}
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const admin = await requireAdmin();
-  if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const { response } = await requireAdmin();
+  if (response) return response;
+  await connectDB();
 
   const { id } = await params;
   const body = await request.json();
@@ -62,8 +53,9 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const admin = await requireAdmin();
-  if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const { response } = await requireAdmin();
+  if (response) return response;
+  await connectDB();
 
   const { id } = await params;
   const tag = await Tag.findById(id);
