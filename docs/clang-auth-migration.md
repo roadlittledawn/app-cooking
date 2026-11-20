@@ -15,9 +15,10 @@ Reference docs, in the clang-auth repo: `docs/integration-guide.md`, `docs/migra
 | P2 | **Done 2026-11-19:** prod app `cooking` (origin `https://cooking.clintonlangosch.com`), with you granted `cooking → admin`. |
 | Merge to `develop` | **Done 2026-11-20** (PR #28). |
 | P0 | **Done 2026-11-20.** Prod data is in database `test`: 3 users, none linked yet. The owner (admin, password) has 9 recipes, 5 saved and 50 ingredients. The two other users (role `user`) have 1 recipe each; one signed in with a password, the other only with Google. |
-| P3 | **Deferred** (decided 2026-11-20). The other two users get no clang-auth account for now. Their recipes, ingredients and saved recipe stay attached to their existing `User` and stay visible; they just can't sign in. See [Adding the other users later](#adding-the-other-users-later). |
+| P3 | **Accounts created 2026-11-20, setup links not sent.** The other two users have clang-auth accounts with the same emails as their `User`, granted `cooking` (role `user`, as before). They can't sign in until they set a password, so nothing changes for them yet. See [Adding the other users later](#adding-the-other-users-later). |
 | P1 | **Done 2026-11-20.** Domain added to the Vercel project, and Netlify DNS CNAME `cooking → 220b62ff0e8ca24c.vercel-dns-017.com`. TLS was issued within about a minute; the domain serves the current production app until the release. |
-| P4, P5 | Not started. P5 links only the owner for now. |
+| P4 | **Done 2026-11-20.** `AUTH_BASE_URL` and `AUTH_APP_SLUG` set in Vercel. |
+| P5 | **Done 2026-11-20.** Dry run against database `test`: 3 to link, no conflicts, nobody unmatched. Applied (3 of 3 written, unique index created); a rerun shows all 3 already linked. |
 
 ## Goal
 
@@ -143,21 +144,20 @@ browser (cooking.clintonlangosch.com)
 1. **P0–P5.** The new domain serves the current app and every existing `User` has its `clangAuthSub`; nothing changes for users.
 2. **Merge to `develop`, then release to `main`.** The release deploy is the cutover: the new code, and the `308` from `app-cooking.vercel.app`.
 3. **Verify (V1)** on `https://cooking.clintonlangosch.com`.
-4. **P3** is deferred: see [Adding the other users later](#adding-the-other-users-later).
+4. **P3:** send the other users their setup links when they want in (see [Adding the other users later](#adding-the-other-users-later)).
 5. **Rollback** if needed: Vercel → Deployments → the previous production deployment → Instant Rollback. The old code, old env and bcrypt hashes are all still there until cleanup.
 6. **Cleanup** after a couple of weeks (C1–C4).
 
 ## Adding the other users later
 
-P3 was deferred at cutover. Nothing is lost in the meantime: recipes, ingredients and saved recipes point at the local `User._id`, which doesn't change. To let someone sign in later, do these steps in order:
+The other two users' clang-auth accounts exist and are already linked to their `User` by P5, so their recipes, ingredients and saved recipe are attached. Nothing else is needed in this app. To let one of them in:
 
-1. **Create their clang-auth account** with the **same email** as their `User` (check with the P0 query): `clang-auth user create <email> --name "<name>" --grant cooking`. Use `--grant cooking:admin` to make them an admin. If they already have a clang-auth account, use `clang-auth grant set <email> cooking` (or `cooking:admin`).
-2. **Rerun the migration** (P5 commands: export the mapping, dry run, then `--apply`). It's idempotent: users already linked show under "Already linked" and only the new ones are written.
-3. **Send the setup link.** It expires after 72 h; `clang-auth user reset <email>` issues a new one. A user who only ever used Google gets a password account for now; Google comes back through clang-auth (roadlittledawn/service-clang-auth-claude#3).
+1. **Send a setup link:** `clang-auth user reset <email>` prints a fresh one-time link (it expires after 72 h; rerun for another). They set a password and sign in. A user who only ever used Google gets a password account for now; Google comes back through clang-auth (roadlittledawn/service-clang-auth-claude#3).
+2. **Optional, admin:** `clang-auth grant set <email> cooking:admin`. See the ownership note below first.
 
-If someone signs in between steps 1 and 2, they see an error page naming the migration script, not a new empty account. Running step 2 fixes it.
+For someone new who has no `User` yet, just create their account with `--grant cooking`; a `User` is created on first sign-in. For someone who has a `User` but no clang-auth account, create the account and rerun the migration (P5) before they sign in; otherwise they get an error page that names the migration script.
 
-**Ownership is still open.** Today only a recipe's author can edit or delete it: `PUT` and `DELETE` in `src/app/api/recipes/[id]/route.ts` compare `authorId` with the user and don't check the role, so even admins can't edit someone else's recipe. Admin (the `cooking:admin` grant, D5) only adds the admin pages (ingredients, tags) and the featured toggle. Letting the other users edit any recipe therefore needs a code change, for example "the author or an admin" in those two handlers, plus showing Edit on the recipe page by the same rule. The edit page itself (`src/app/recipes/[id]/edit/page.tsx`) checks only that someone is signed in, not ownership; the API refuses the save. This predates the migration. Decide the rule before step 1.
+**Ownership is still open.** Today only a recipe's author can edit or delete it: `PUT` and `DELETE` in `src/app/api/recipes/[id]/route.ts` compare `authorId` with the user and don't check the role, so even admins can't edit someone else's recipe. Admin (the `cooking:admin` grant, D5) only adds the admin pages (ingredients, tags) and the featured toggle. Letting the other users edit any recipe therefore needs a code change, for example "the author or an admin" in those two handlers, plus showing Edit on the recipe page by the same rule. The edit page itself (`src/app/recipes/[id]/edit/page.tsx`) checks only that someone is signed in, not ownership; the API refuses the save. This predates the migration. Decide the rule before granting admin.
 
 ## Verification (V1)
 
