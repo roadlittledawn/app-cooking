@@ -16,7 +16,8 @@ Reference docs, in the clang-auth repo: `docs/integration-guide.md`, `docs/migra
 | Merge to `develop` | **Done 2026-11-20** (PR #28). |
 | P0 | **Done 2026-11-20.** Prod data is in database `test`: 3 users, none linked yet. The owner (admin, password) has 9 recipes, 5 saved and 50 ingredients. The two other users (role `user`) have 1 recipe each; one signed in with a password, the other only with Google. |
 | P3 | **Deferred** (decided 2026-11-20). The other two users get no clang-auth account for now. Their recipes, ingredients and saved recipe stay attached to their existing `User` and stay visible; they just can't sign in. See [Adding the other users later](#adding-the-other-users-later). |
-| P1, P4, P5 | Not started. P5 links only the owner for now. |
+| P1 | **Done 2026-11-20.** Domain added to the Vercel project, and Netlify DNS CNAME `cooking → 220b62ff0e8ca24c.vercel-dns-017.com`. TLS was issued within about a minute; the domain serves the current production app until the release. |
+| P4, P5 | Not started. P5 links only the owner for now. |
 
 ## Goal
 
