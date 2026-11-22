@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The MCP server is its own workspace with its own tsconfig.
+    "mcp-server/**",
   ]),
 ]);
 

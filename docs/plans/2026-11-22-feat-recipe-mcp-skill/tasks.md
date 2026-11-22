@@ -13,7 +13,7 @@ Every task leaves `npm run lint`, `npx tsc --noEmit`, `npm run test:auth` and `n
   - Change: commit `requirements.md`, `design.md` and `tasks.md`
   - Verify: none
 
-- [ ] **1. chore: add mcp-server npm workspace skeleton**
+- [x] **1. chore: add mcp-server npm workspace skeleton**
   - Covers: R7, N4
   - Change:
     - Add `"workspaces": ["mcp-server"]` to the root `package.json`.
