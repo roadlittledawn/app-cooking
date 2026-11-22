@@ -86,7 +86,7 @@ Every task leaves `npm run lint`, `npx tsc --noEmit`, `npm run test:auth` and `n
     - `mcp-server` tests over saved HTML fixtures for each JSON-LD shape and for a page without one.
     - Manual: run it on 2–3 real recipe blogs.
 
-- [ ] **7. feat(skill): add add-recipe skill**
+- [x] **7. feat(skill): add add-recipe skill**
   - Covers: R13, R14, R15, R16, R17, R18, R19, R20, R21
   - Change: `.claude/skills/add-recipe/SKILL.md`, following the design's workflow:
     - Sources and the URL fallback.
@@ -96,7 +96,7 @@ Every task leaves `npm run lint`, `npx tsc --noEmit`, `npm run test:auth` and `n
     - A draft with new items marked, then confirmation before any write.
     - A reply with the recipe's link.
     - The same flow for "update my recipe X".
-  - Verify: manual, against **prod** (needs #4 deployed and a prod key):
+  - Verify: manual, **locally** (local clang-auth and the local database). Done: a URL run created the new ingredients and the recipe. The prod run moved to task 8, because it needs this branch released to `main`:
     - `/add-recipe <blog URL>`: the draft is accurate, existing ingredients are reused, and nothing is written before you confirm.
     - `/add-recipe` with pasted text.
     - `/add-recipe` from memory: it asks for servings or times when they're missing.
@@ -111,7 +111,10 @@ Every task leaves `npm run lint`, `npx tsc --noEmit`, `npm run test:auth` and `n
     - CLAUDE.md, Authentication section: Bearer tokens accepted (key roles come from clang-auth), no Bearer deletes, and a rule that MCP tools change in the same PR as the API.
     - Note the follow-up: unescaped `$regex` in the `q` searches.
     - Delete `docs/plans/2026-11-22-feat-recipe-mcp-skill/`. Open the PR into `develop`.
-  - Verify: the links resolve, the plan folder is gone, and CI is green on the PR. Manual: Brie follows the README from a fresh clone and adds a recipe.
+  - Verify: the links resolve, the plan folder is gone, and CI is green on the PR. Manual, after the release PR (`develop` → `main`) ships:
+    - A prod key in `mcp-server/.env`, with `AUTH_BASE_URL` on `https`.
+    - `/add-recipe <blog URL>` against prod, then spot-check the recipe page.
+    - Brie follows the README from a fresh clone and adds a recipe.
 
 ## Coverage
 
