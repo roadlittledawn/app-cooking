@@ -44,7 +44,7 @@ Every task leaves `npm run lint`, `npx tsc --noEmit`, `npm run test:auth` and `n
       - A cookie write with a sibling `Origin` should still give 403.
       - Browser sign-in and editing should still work.
 
-- [ ] **3. feat(api): add tag list and exact ingredient lookup**
+- [x] **3. feat(api): add tag list and exact ingredient lookup**
   - Covers: R5, R6
   - Change: a new `GET /api/tags` that returns `{ tags: string[] }` (the `Tag` documents plus the tags on recipes, sorted) and needs a user. `GET /api/ingredients?name=` does an exact, case-insensitive match. `q` is unchanged.
   - Verify: manual, local `curl` with a Bearer token:
