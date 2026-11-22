@@ -142,7 +142,7 @@ Each tool's description is written for the model and says when to use it. Result
 
 | Tool | Input | Calls | Returns |
 |---|---|---|---|
-| `search_recipes` | `query`, `limit` (≤ 20, default 10) | `GET /api/recipes?q=` | `[{ id, title, author, url }]` |
+| `search_recipes` | `query?`, `tags?` (matches any), `limit` (≤ 20, default 10) | `GET /api/recipes?q=&tags=` | `[{ id, title, author, tags, url }]` (newest first) |
 | `get_recipe` | `id` | `GET /api/recipes/:id` | Every field, with `ingredients: [{ name, amount, unit }]`, plus `author`, `url` and `isMine` |
 | `list_tags` | (none) | `GET /api/tags` | `string[]` |
 | `search_ingredients` | `query` | `GET /api/ingredients?q=` | `[{ id, name }]` |

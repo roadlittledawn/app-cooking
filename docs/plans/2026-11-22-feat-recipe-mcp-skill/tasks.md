@@ -51,7 +51,7 @@ Every task leaves `npm run lint`, `npx tsc --noEmit`, `npm run test:auth` and `n
     - `/api/tags` returns the list. With no auth it gives 401.
     - `?name=Salt` finds `salt`. `?name=sal` finds nothing.
 
-- [ ] **4. feat(mcp): add token exchange and read tools**
+- [x] **4. feat(mcp): add token exchange and read tools**
   - Covers: R4, R7, R8, R9, R11, R12, N2, N5
   - Needs: #4 running locally
   - Change:

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/components/layout/auth-provider";
+import { getAuthBaseUrl } from "@/lib/auth/client";
 import { useState, useRef, useEffect } from "react";
 import {
   UtensilsCrossed,
@@ -15,6 +16,7 @@ import {
   Bookmark,
   ShieldCheck,
   LogOut,
+  KeyRound,
 } from "lucide-react";
 
 export function Header() {
@@ -49,6 +51,8 @@ export function Header() {
 
   const accountLinks = [
     { href: "/saved", label: "Saved Recipes", icon: Bookmark },
+    // On clang-auth: keys for the local MCP server (mcp-server/README.md).
+    { href: `${getAuthBaseUrl()}/keys?app=cooking`, label: "API keys", icon: KeyRound },
   ];
 
   const dropdownItemClass =

@@ -44,7 +44,7 @@ Settled during planning. Don't reopen these without a reason.
 
 - **R7.** Claude Code in this repo connects to a `cooking` MCP server after a one-time setup that the README documents: create a key on clang-auth, put it in a local env file, then install and build.
 - **R8.** The server exchanges its clang-auth key for an access token, reuses the token until shortly before it expires, and exchanges again after a `401`.
-- **R9.** The server provides tools to: search recipes by title, get a recipe, create a recipe, update a recipe the user owns, search ingredients, create an ingredient, list tags, and extract structured recipe data from a web page.
+- **R9.** The server provides tools to: search recipes by title and/or tags, get a recipe, create a recipe, update a recipe the user owns, search ingredients, create an ingredient, list tags, and extract structured recipe data from a web page.
 - **R10.** The recipe tools accept and return ingredients by name as well as id, so the model never has to juggle ObjectIds to read a recipe.
 - **R11.** API validation errors come back to the model as readable messages that name the field, so it can correct itself and retry. A rejected key comes back as a message that says how to get a new one.
 - **R12.** The server points at production by default, and env vars can point it at local dev: the app and clang-auth URLs.
