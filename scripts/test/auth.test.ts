@@ -1,6 +1,6 @@
 /**
- * clang-auth tests: token verification, grant → role, return-path validation,
- * and the migration's link planning.
+ * clang-auth tests: token verification (cookie and Bearer), grant → role, the
+ * API write policy, return-path validation, and the migration's link planning.
  *
  * Hermetic: signs tokens with a throwaway ES256 key and injects its public half
  * with setJwksForTesting, so no auth service, network or database is needed.
@@ -11,8 +11,10 @@
 
 import assert from "node:assert/strict";
 import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type JWK } from "jose";
+import { apiWriteDecision } from "../../src/lib/auth/api-write-policy";
 import {
   displayName,
+  requestToken,
   resolveToken,
   roleFromGrant,
   safeReturnPath,
@@ -46,6 +48,8 @@ interface SignOptions {
   key?: CryptoKey;
   sub?: string | null;
   alg?: string;
+  /** e.g. ["api_key"] for a token exchanged from a clang-auth API key. */
+  amr?: string[];
 }
 
 async function main() {
@@ -59,6 +63,7 @@ async function main() {
       email: "Me@Example.com",
       name: "Me",
       apps: opts.apps ?? { cooking: ["admin"] },
+      ...(opts.amr ? { amr: opts.amr } : {}),
     })
       .setProtectedHeader({ alg: "ES256", kid: opts.kid ?? "test-key" })
       .setIssuer(opts.issuer ?? settings.authBaseUrl)
@@ -160,6 +165,86 @@ async function main() {
     assert.equal(safeReturnPath("//evil.test/"), "/");
     assert.equal(safeReturnPath("/\\evil.test/"), "/");
     assert.equal(safeReturnPath("javascript:alert(1)"), "/");
+  });
+
+  console.log("bearer tokens (local MCP server)");
+
+  await test("requestToken: no Authorization header → the cookie", () => {
+    assert.equal(requestToken(null, "cookie-jwt"), "cookie-jwt");
+    assert.equal(requestToken(undefined, undefined), undefined);
+  });
+
+  await test("requestToken: a Bearer header wins over the cookie", () => {
+    assert.equal(requestToken("Bearer header-jwt", "cookie-jwt"), "header-jwt");
+    assert.equal(requestToken("bearer  header-jwt ", undefined), "header-jwt");
+  });
+
+  await test("requestToken: a malformed header never falls back to the cookie", () => {
+    for (const header of ["", "Bearer", "Bearer ", "Basic abc", "Bearer a b", "header-jwt"]) {
+      assert.equal(requestToken(header, "cookie-jwt"), undefined, JSON.stringify(header));
+    }
+  });
+
+  await test("valid Bearer token → ok", async () => {
+    const state = await resolveToken(requestToken(`Bearer ${await sign()}`, undefined), settings);
+    assert.equal(state.status, "ok");
+  });
+
+  await test("garbage Bearer token with a valid cookie → anonymous", async () => {
+    const state = await resolveToken(requestToken("Bearer nope", await sign()), settings);
+    assert.equal(state.status, "anonymous");
+  });
+
+  await test("expired Bearer token → anonymous", async () => {
+    const token = await sign({ expiresIn: Math.floor(Date.now() / 1000) - 120 });
+    const state = await resolveToken(requestToken(`Bearer ${token}`, undefined), settings);
+    assert.equal(state.status, "anonymous");
+  });
+
+  await test("API-key token with no roles → ok, user (roles come from the key)", async () => {
+    const token = await sign({ amr: ["api_key"], apps: { cooking: [] } });
+    const state = await resolveToken(requestToken(`Bearer ${token}`, undefined), settings);
+    assert.equal(state.status, "ok");
+    if (state.status !== "ok") return;
+    assert.equal(state.identity.role, "user");
+  });
+
+  await test("API-key token scoped to another app → forbidden", async () => {
+    const token = await sign({ amr: ["api_key"], apps: { health: [] } });
+    const state = await resolveToken(requestToken(`Bearer ${token}`, undefined), settings);
+    assert.equal(state.status, "forbidden");
+  });
+
+  console.log("API write policy (proxy)");
+
+  await test("reads always pass", () => {
+    for (const method of ["GET", "HEAD", "OPTIONS"]) {
+      assert.deepEqual(apiWriteDecision(method, false, false), { allow: true });
+      assert.deepEqual(apiWriteDecision(method, true, false), { allow: true });
+    }
+  });
+
+  await test("cookie writes must be same-origin", () => {
+    for (const method of ["POST", "PUT", "PATCH", "DELETE"]) {
+      assert.deepEqual(apiWriteDecision(method, false, true), { allow: true });
+      const refused = apiWriteDecision(method, false, false);
+      assert.equal(refused.allow, false);
+      if (!refused.allow) assert.equal(refused.status, 403);
+    }
+  });
+
+  await test("Bearer writes skip the origin check", () => {
+    for (const method of ["POST", "PUT", "PATCH"]) {
+      assert.deepEqual(apiWriteDecision(method, true, false), { allow: true });
+    }
+  });
+
+  await test("Bearer DELETE is refused, even same-origin", () => {
+    for (const sameOrigin of [true, false]) {
+      const decision = apiWriteDecision("DELETE", true, sameOrigin);
+      assert.equal(decision.allow, false);
+      if (!decision.allow) assert.equal(decision.status, 403);
+    }
   });
 
   console.log("migration link planning");

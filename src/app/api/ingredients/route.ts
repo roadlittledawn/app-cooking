@@ -7,8 +7,16 @@ import { createIngredientSchema } from "@/lib/validations/ingredient";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q") || "";
+  const name = searchParams.get("name");
 
   await connectDB();
+
+  // Exact lookup (names are stored lowercase): 0 or 1 results. Used by the
+  // local MCP server to resolve ingredient names without regex near-misses.
+  if (name !== null) {
+    const match = await Ingredient.findOne({ name: name.toLowerCase().trim() }).lean();
+    return NextResponse.json(match ? [match] : []);
+  }
 
   const filter = q
     ? { name: { $regex: q, $options: "i" } }

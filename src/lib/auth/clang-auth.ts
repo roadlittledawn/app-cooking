@@ -109,7 +109,22 @@ export function roleFromGrant(roles: string[]): Role {
   return roles.includes("admin") ? "admin" : "user";
 }
 
-/** Turn a raw cookie value (or its absence) into this app's auth state. */
+/**
+ * The access token a request presents. `Authorization: Bearer <jwt>` (sent by
+ * the local MCP server, which exchanges a clang-auth API key for it) wins over
+ * the cookie. A present but malformed header gives `undefined`, so a bad
+ * Bearer request is anonymous and never falls back to the cookie.
+ */
+export function requestToken(
+  authorization: string | null | undefined,
+  cookie: string | undefined
+): string | undefined {
+  if (authorization === null || authorization === undefined) return cookie;
+  const match = /^Bearer\s+(\S+)\s*$/i.exec(authorization);
+  return match?.[1];
+}
+
+/** Turn a raw token (or its absence) into this app's auth state. */
 export async function resolveToken(
   token: string | undefined,
   settings: AuthSettings = authSettings()

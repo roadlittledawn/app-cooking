@@ -7,6 +7,7 @@ import {
   ACCESS_COOKIE,
   displayName,
   loginUrl,
+  requestToken,
   resolveToken,
   type AuthState,
   type Identity,
@@ -34,10 +35,17 @@ export interface CurrentUser {
   exp: number;
 }
 
-/** `cache()` dedupes within one request, so a layout and its page verify once. */
+/**
+ * The request's token: `Authorization: Bearer` (the local MCP server) if
+ * present, else the `ca_access` cookie. See requestToken().
+ *
+ * `cache()` dedupes within one request, so a layout and its page verify once.
+ */
 export const getAuthState = cache(async (): Promise<AuthState> => {
-  const cookieStore = await cookies();
-  return resolveToken(cookieStore.get(ACCESS_COOKIE)?.value);
+  const [cookieStore, headerStore] = await Promise.all([cookies(), headers()]);
+  return resolveToken(
+    requestToken(headerStore.get("authorization"), cookieStore.get(ACCESS_COOKIE)?.value)
+  );
 });
 
 async function findOrCreateUser(identity: Identity) {
