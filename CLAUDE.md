@@ -8,6 +8,7 @@
 - **Images:** Vercel Blob
 - **Hosting:** Vercel, at `https://cooking.clintonlangosch.com` (the old `app-cooking.vercel.app` redirects there)
 - **Tests:** `npm run test:auth` (a plain `tsx` script with `node:assert`; there's no test framework)
+- **MCP server:** `mcp-server/`, an npm workspace (stdio, for Claude Code), with the `/add-recipe` skill in `.claude/skills/`. Tests: `npm test -w mcp-server` (`node:test` via `tsx`). See [mcp-server/README.md](mcp-server/README.md).
 
 > The SDD scaffold sections further down (components, CMDO, Kubernetes) describe the template this repo was generated from, not the app as built.
 
@@ -20,6 +21,8 @@ Sign-in is handled by clang-auth. The app never sees a password. It verifies the
 - **Roles come from the clang-auth grant:** `apps.cooking` containing `admin` means admin; any other grant means a regular user. No `cooking` grant means no access.
 - **Adding a user:** `clang-auth user create <email> --name "<name>" --grant cooking` (add `:admin` for an admin), then send them the setup link. There's no sign-up page.
 - `src/proxy.ts` redirects signed-out visitors on protected pages to clang-auth and refuses cross-origin API writes. Browser code calls protected APIs with `authFetch()` from `src/lib/auth/client.ts`, which refreshes the token on a `401`.
+- **Bearer tokens:** API routes also accept a clang-auth access token in `Authorization: Bearer`, from the local MCP server (`mcp-server/`), which exchanges a clang-auth API key for it. A Bearer header always wins over the cookie and never falls back to it (`requestToken()` in `clang-auth.ts`). Bearer writes skip the same-origin check, but any Bearer `DELETE` gets `403` (`src/lib/auth/api-write-policy.ts`). Key tokens carry the roles ticked for the key on clang-auth `/keys`, none by default, so the app treats them like any other token. The app stores no keys.
+- **MCP tools track the API:** when an API route the MCP server uses changes, update `mcp-server/` in the same PR (its README lists the tools and their routes).
 - **Local dev:** run the clang-auth service locally (`http://auth.localtest.me:4000`), then `npx next dev -p 3004` and open `http://cooking.localtest.me:3004`. `localhost` doesn't get the cookie. Point `MONGODB_URI` at a local database: `.env.local` may point at production.
 
 ## Coding Standards (MANDATORY)

@@ -6,6 +6,10 @@ A personal recipe collection, live at https://cooking.clintonlangosch.com. Next.
 
 Sign-in uses the shared clang-auth service (`auth.clintonlangosch.com`). There's no sign-up page: users are invited with the clang-auth CLI. How it works, local setup and the migration from Auth.js are in [docs/clang-auth-migration.md](docs/clang-auth-migration.md). For local development, copy `.env.local.example` to `.env.local` and open the app at `http://cooking.localtest.me:3004` (`npx next dev -p 3004`).
 
+## Add recipes with Claude Code
+
+From this repo, run `/add-recipe <recipe URL, pasted text, or a description>`. Claude drafts the recipe, matches its ingredients and tags to the ones the app already has, shows you the draft, and creates the recipe once you confirm. It talks to the app through the local MCP server in [`mcp-server/`](mcp-server/README.md), which needs a one-time setup: create a clang-auth API key, add it to `mcp-server/.env`, and build.
+
 ## Getting Started
 
 This project was scaffolded with SDD. To add your first feature:
