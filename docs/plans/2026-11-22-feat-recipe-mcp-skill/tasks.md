@@ -79,7 +79,7 @@ Every task leaves `npm run lint`, `npx tsc --noEmit`, `npm run test:auth` and `n
       - Try to update someone else's recipe. It should give 403.
       - Ask it to delete a recipe. There's no tool for that, and a raw Bearer `DELETE` gives 403.
 
-- [ ] **6. feat(mcp): add extract_recipe_from_url**
+- [x] **6. feat(mcp): add extract_recipe_from_url**
   - Covers: R9, R14, N5
   - Change: fetch the page and parse the `schema.org/Recipe` JSON-LD, whether it's an object, an array or an `@graph`. Convert ISO-8601 durations to minutes, and flatten instructions, including `HowToSection`. Otherwise return `{ found: false }`.
   - Verify:

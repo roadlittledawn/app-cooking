@@ -67,6 +67,7 @@ test("registers the read and write tools", async () => {
   assert.deepEqual(tools.map((t) => t.name).sort(), [
     "create_ingredient",
     "create_recipe",
+    "extract_recipe_from_url",
     "get_recipe",
     "list_tags",
     "search_ingredients",
