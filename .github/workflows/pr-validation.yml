@@ -30,3 +30,9 @@ jobs:
 
       - name: Auth tests
         run: npm run test:auth
+
+      - name: MCP server build, type check and tests
+        run: |
+          npm run typecheck -w mcp-server
+          npm run build -w mcp-server
+          npm test -w mcp-server
