@@ -27,17 +27,16 @@ Every task leaves `npm run lint`, `npx tsc --noEmit`, `npm run test:auth` and `n
       - Restart Claude Code in the repo. `/mcp` should show `cooking` connected, and `ping` should answer.
       - Push the branch. The Vercel preview should build, and the lockfile diff should look sane.
 
-- [ ] **2. feat(auth): accept Bearer access tokens**
+- [x] **2. feat(auth): accept Bearer access tokens**
   - Covers: R1, R2, R3, N1, N3
   - Change:
     - `getAuthState()` takes the token from `Authorization: Bearer` when that header is present, with no cookie fallback, and otherwise from `ca_access`.
-    - `Identity` and `CurrentUser` gain `viaApiKey`, read from `amr` containing `api_key`. That forces the role to `user`, so `requireAdmin()` returns 403.
     - `proxy.ts`: a pure `apiWriteDecision()` lets writes with an `Authorization` header skip the same-origin check and returns `403` for a `DELETE` with one.
   - Verify:
     - `scripts/test/auth.test.ts` gains tests for:
       - Token-source selection: Bearer wins, and a bad Bearer token doesn't fall back.
       - Bearer valid, expired and no-grant tokens.
-      - `amr: ["api_key"]` forcing `user` even when the grant is `admin`.
+      - Key tokens' roles honored as given, and a key token for another app forbidden.
       - Every `apiWriteDecision` case.
     - Manual, local: mint a token with local clang-auth `/admin/tokens`.
       - `curl` `/api/me` with the Bearer token should give 200.
@@ -109,7 +108,7 @@ Every task leaves `npm run lint`, `npx tsc --noEmit`, `npm run test:auth` and `n
   - Change:
     - Write `mcp-server/README.md`: setup (create a key at clang-auth `/keys?app=cooking`, `.env`, build, `/mcp`), the tools table, local versus prod, and the revocation behavior.
     - Root README: a short "Add recipes with Claude Code" section.
-    - CLAUDE.md, Authentication section: Bearer tokens accepted, `viaApiKey` never admin, no Bearer deletes, and a rule that MCP tools change in the same PR as the API.
+    - CLAUDE.md, Authentication section: Bearer tokens accepted (key roles come from clang-auth), no Bearer deletes, and a rule that MCP tools change in the same PR as the API.
     - Note the follow-up: unescaped `$regex` in the `q` searches.
     - Delete `docs/plans/2026-11-22-feat-recipe-mcp-skill/`. Open the PR into `develop`.
   - Verify: the links resolve, the plan folder is gone, and CI is green on the PR. Manual: Brie follows the README from a fresh clone and adds a recipe.

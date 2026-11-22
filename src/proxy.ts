@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ACCESS_COOKIE, loginUrl, resolveToken } from "./lib/auth/clang-auth";
+import { apiWriteDecision } from "./lib/auth/api-write-policy";
 
 /**
  * Next.js 16 Proxy: auth gate for pages, and a CSRF check for API writes.
@@ -16,12 +17,12 @@ import { ACCESS_COOKIE, loginUrl, resolveToken } from "./lib/auth/clang-auth";
  * - State-changing API requests must come from this app's own origin. The
  *   cookie is shared across *.clintonlangosch.com and SameSite=Lax treats
  *   sibling subdomains as same-site, so this blocks forged cross-app requests.
+ *   Requests with an `Authorization` header (the local MCP server) skip it but
+ *   may not DELETE. See src/lib/auth/api-write-policy.ts.
  *
  * The admin role needs the database, so it's checked in src/app/admin/layout.tsx
  * and in the admin route handlers, not here.
  */
-
-const WRITE_METHODS = ["POST", "PUT", "PATCH", "DELETE"];
 
 function isProtectedPage(pathname: string): boolean {
   return (
@@ -67,8 +68,13 @@ export default async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   if (pathname.startsWith("/api/")) {
-    if (WRITE_METHODS.includes(request.method) && !isSameOrigin(request)) {
-      return NextResponse.json({ error: "Cross-origin request refused" }, { status: 403 });
+    const decision = apiWriteDecision(
+      request.method,
+      request.headers.has("authorization"),
+      isSameOrigin(request)
+    );
+    if (!decision.allow) {
+      return NextResponse.json({ error: decision.error }, { status: decision.status });
     }
     return NextResponse.next();
   }

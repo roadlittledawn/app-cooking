@@ -76,12 +76,12 @@ flowchart TD
 
 - **A Bearer header always wins, and a bad Bearer token never falls back to the cookie** (R1, N1).
 - **Same verification, same states.** `anonymous` gives `401`, `forbidden` (no `cooking` grant) gives `403`, and `ok` continues (R2). Route handlers already return JSON `401`s, so there's no redirect.
-- **`Identity` gains `viaApiKey: boolean`,** read from `amr` containing `"api_key"`. `CurrentUser` carries it through. Browser tokens have no `amr`, so they're unaffected.
+- **No new identity fields.** A key token's `apps.cooking` holds the roles chosen for that key, so `roleFromGrant()` works unchanged.
 
 ### Key-token restrictions (R3)
 
-- **Role:** when `viaApiKey` is true, the role is forced to `user`, whatever the token's `cooking` roles say. `requireAdmin()` therefore returns `403`. If #4 ends up scoping roles itself, this becomes a no-op but stays as defense in depth.
-- **No deletes:** `requireUser()` can't see the HTTP method, so the proxy enforces this. The proxy can only see that an `Authorization` header is present: it can't verify the token without the JWKS round trip it avoids on API paths. So the rule is **any `DELETE` with an `Authorization` header gets `403` "Deletes are only available in the web UI."** This app has no other Bearer clients, so that's equivalent today. If one ever appears, move the check into the handlers and base it on `viaApiKey`.
+- **Role:** decided in [#4](https://github.com/roadlittledawn/service-clang-auth-claude/issues/4#issuecomment-7083618406). Each key carries a subset of the user's roles, ticked on `/keys` with none by default, and the token's roles are the key's roles intersected with the user's current grant. The app trusts them like any token's roles. An admin's key is a regular user unless the admin deliberately ticks `admin`, and demoting the user demotes their keys.
+- **No deletes:** `requireUser()` can't see the HTTP method, so the proxy enforces this. The proxy can only see that an `Authorization` header is present: it can't verify the token without the JWKS round trip it avoids on API paths. So the rule is **any `DELETE` with an `Authorization` header gets `403` "Deletes are only available in the web UI."** This app has no other Bearer clients, so that's equivalent today. If one ever appears, move the check into the handlers and base it on the token's `amr: ["api_key"]`.
 - **User records:** the user is looked up and synced by `sub` exactly as on the cookie path (`findOrCreateUser`). Authorship is correct because the token's `sub` is the key owner.
 
 ### Proxy CSRF
@@ -193,7 +193,7 @@ The skill also covers "update my recipe X" by way of `search_recipes`, `get_reci
 ## Security
 
 - **Token handling:** the app verifies Bearer tokens exactly like cookies: ES256, issuer, JWKS and grant. A Bearer header never falls back to the cookie. The MCP server keeps exchanged tokens in memory only. The key itself stays in a gitignored file (N2).
-- **Blast radius of a leaked key:** limited to this app (#4 scopes the token's `apps` to `cooking`), and to regular-user actions: read, create and edit the owner's recipes, and create ingredients. It can't delete, can't use admin routes, and can't edit others' recipes. The owner revokes it on clang-auth, and it stops working within 15 minutes.
+- **Blast radius of a leaked key:** limited to this app (#4 scopes the token's `apps` to `cooking`), and, unless the key was deliberately given `admin`, to regular-user actions: read, create and edit the owner's recipes, and create ingredients. It can't delete (any role), and without `admin` it can't use admin routes or edit others' recipes. The owner revokes it on clang-auth, and it stops working within 15 minutes.
 - **CSRF:** unchanged for cookie requests. The bearer path is exempt, for the reasons given under Proxy CSRF.
 - **Preview deployments:** a Bearer token works on previews that share the production database. That's acceptable: a token holder can do the same things on prod, and nothing about previews changes for browsers.
 - **`extract_recipe_from_url`** runs locally and fetches only URLs the user gave it, so there's no SSRF exposure on the server.
@@ -206,7 +206,7 @@ These use the existing `tsx` + `node:assert` style.
 - **`scripts/test/auth.test.ts`, extended** (N3). These reuse its throwaway ES256 keypair and `setJwksForTesting`:
   - Choosing the token source, written as a pure function over the headers and cookie: Bearer wins, and a bad Bearer token doesn't fall back.
   - `resolveToken` on Bearer tokens: valid, expired, wrong issuer, no grant.
-  - `amr: ["api_key"]` gives `viaApiKey` and the role forced to `user`, even when the grant says `admin`. No `amr` keeps the role.
+  - A key token's roles are honored as given (no roles means user). A key token scoped to another app is forbidden.
   - `apiWriteDecision`: cookie write cross-origin is 403, cookie write same-origin passes, bearer write cross-origin passes, bearer `DELETE` is 403.
 - **`mcp-server` unit tests:**
   - The token cache: first call exchanges; a second call within the lifetime reuses the token; near expiry it exchanges again; a `401` triggers one exchange and a retry; concurrent calls share one exchange; an exchange `401` gives the "create a new key" message.
@@ -240,7 +240,7 @@ These use the existing `tsx` + `node:assert` style.
 ## Build order
 
 1. **`chore: add mcp-server npm workspace skeleton`.** Root workspaces, excludes, a hello-world stdio server, `.mcp.json`, CI. Verify the install, build and preview, and that `/mcp` connects.
-2. **`feat(auth): accept Bearer access tokens`.** Token source, `viaApiKey`, forced `user` role, the proxy's CSRF and DELETE decision, plus tests (R1–R3, N1, N3).
+2. **`feat(auth): accept Bearer access tokens`.** Token source, the proxy's CSRF and DELETE decision, plus tests (R1–R3, N1, N3).
 3. **`feat(api): add tag list and exact ingredient lookup`** (R5, R6).
 4. **`feat(mcp): add token exchange and read tools`.** Needs #4 running locally. Token cache, API client, errors, the read tools, the "API keys" menu link, plus tests (R4, R7–R9, R11, R12, N5).
 5. **`feat(mcp): add write tools`.** Name resolution, plus tests (R9, R10, R20).

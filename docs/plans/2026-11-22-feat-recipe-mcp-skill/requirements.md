@@ -17,7 +17,7 @@ Settled during planning. Don't reopen these without a reason.
 | Where the agent runs | Locally in Claude Code: a project skill plus a local stdio MCP server in this repo | dev-standards agent-access default. No hosted AI, no token costs in the app. |
 | How the MCP server gets data | It calls the app's HTTP API, never MongoDB | Validation and auth rules stay in one place (dev-standards). |
 | API keys | **Issued and stored by clang-auth** ([service-clang-auth-claude#4](https://github.com/roadlittledawn/service-clang-auth-claude/issues/4)). The MCP server exchanges its key for a normal 15-minute access token and sends it as `Authorization: Bearer`. | Revoking a key or a grant, or disabling a user, takes effect within 15 minutes, with no key table in the app. This replaces the earlier plan for keys stored in the app (issued on an account page). |
-| Key-token privileges | Key tokens act as a regular user: never admin, no deletes. The app enforces it from `amr: ["api_key"]` unless clang-auth ends up scoping roles itself ([comment](https://github.com/roadlittledawn/service-clang-auth-claude/issues/4#issuecomment-7083618406)). | A leaked key can't edit other people's recipes. |
+| Key-token privileges | Roles come from clang-auth: each key carries the roles ticked for it on `/keys` (none by default), intersected with the user's current grant. The app treats them like any token's roles. Deletes are refused for any Bearer request. | Decided in [#4](https://github.com/roadlittledawn/service-clang-auth-claude/issues/4#issuecomment-7083618406), so every app gets least privilege by default. A key without admin can't edit other people's recipes. |
 | Recipe sources (v1) | A recipe web page URL, pasted text, or a description from memory | Photos are out for v1. |
 | Images | Not set by the skill in v1 | Can be added later in the web UI. |
 | Tool scope | Search, get, create, and update your own recipes. Look up and create ingredients. List tags. Extract recipe data from a URL. No delete. | Search catches duplicates, and update fixes mistakes. Deletes stay in the web UI. |
@@ -32,7 +32,7 @@ Settled during planning. Don't reopen these without a reason.
 
 - **R1.** API routes accept a clang-auth access token sent as `Authorization: Bearer <token>`, with the same rules as the cookie: valid signature and a `cooking` grant. A request with this header never falls back to the cookie.
 - **R2.** A Bearer request with a missing, invalid or expired token gets `401`, with no redirect. One without a `cooking` grant gets `403`.
-- **R3.** A key-derived token (`amr` contains `api_key`) acts as its owner with regular-user permissions. It gets `403` on admin routes and on any `DELETE`.
+- **R3.** A key-derived token acts as its owner with the roles clang-auth put in it: a regular user unless the key was given admin. Any `DELETE` sent with an `Authorization` header gets `403`.
 - **R4.** Removing someone's `cooking` grant, disabling them or revoking their key stops their MCP access within one access-token lifetime (15 minutes). The app has no offboarding step of its own.
 
 **API**
@@ -65,7 +65,7 @@ Settled during planning. Don't reopen these without a reason.
 
 - **N1.** Browser behavior is unchanged: requests without an `Authorization` header keep the same cookie verification, CSRF check and `401` refresh flow.
 - **N2.** The clang-auth key lives only in a gitignored local env file, never in committed config. Exchanged tokens are kept only in memory.
-- **N3.** Tests cover Bearer handling: a valid token, missing, malformed, expired, no grant, a Bearer header taking priority over the cookie, a key token refused on admin routes and on `DELETE`, and the proxy's CSRF decision. They run in the existing `tsx` + `node:assert` test setup and in CI.
+- **N3.** Tests cover Bearer handling: a valid token, missing, malformed, expired, no grant, a Bearer header taking priority over the cookie, a key token's roles honored as given, a key token scoped to another app refused, Bearer `DELETE` refused, and the proxy's CSRF decision. They run in the existing `tsx` + `node:assert` test setup and in CI.
 - **N4.** Lint, `tsc --noEmit` and the tests pass in CI, and the CI also builds, type-checks and tests `mcp-server/`.
 - **N5.** Tool descriptions and responses are compact: list results carry only the fields the model needs, so one session can add several recipes without filling the context.
 
@@ -81,7 +81,7 @@ Settled during planning. Don't reopen these without a reason.
 
 ## Open questions
 
-- **How clang-auth scopes roles on key tokens:** either the app downgrades on `amr`, or the token already carries a subset of roles. Check what lands in #4 before task 2. Either way, R3 holds.
+- None. (Resolved: clang-auth scopes key roles itself. See the Decisions table.)
 
 ## Success criteria
 
