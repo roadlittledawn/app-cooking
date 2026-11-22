@@ -67,7 +67,7 @@ Every task leaves `npm run lint`, `npx tsc --noEmit`, `npm run test:auth` and `n
       - Ask Claude Code to "search my recipes for chicken" and "list tags".
       - Revoke the key and wait for the token to expire (or restart the server). The next call should give the new-key message.
 
-- [ ] **5. feat(mcp): add write tools**
+- [x] **5. feat(mcp): add write tools**
   - Covers: R9, R10, R11, R20
   - Change: `create_ingredient`, `create_recipe` and `update_recipe`. The recipe tools resolve ingredient names with `?name=`, fail with the list of unknown names, and never create ingredients. Both return `{ id, title, url }`.
   - Verify:

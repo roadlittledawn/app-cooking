@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CookingApi } from "./api.js";
 import { registerReadTools } from "./tools/read.js";
+import { registerWriteTools } from "./tools/write.js";
 
 export interface ServerDeps {
   api: CookingApi;
@@ -12,5 +13,6 @@ export interface ServerDeps {
 export function createServer(deps: ServerDeps): McpServer {
   const server = new McpServer({ name: "cooking", version: "0.1.0" });
   registerReadTools(server, deps);
+  registerWriteTools(server, deps);
   return server;
 }

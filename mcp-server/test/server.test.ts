@@ -61,14 +61,17 @@ function json(result: Awaited<ReturnType<Client["callTool"]>>) {
   return JSON.parse(first.text);
 }
 
-test("registers the read tools", async () => {
+test("registers the read and write tools", async () => {
   const client = await connect(fakeApi({}).api);
   const { tools } = await client.listTools();
   assert.deepEqual(tools.map((t) => t.name).sort(), [
+    "create_ingredient",
+    "create_recipe",
     "get_recipe",
     "list_tags",
     "search_ingredients",
     "search_recipes",
+    "update_recipe",
   ]);
 });
 

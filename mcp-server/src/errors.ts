@@ -1,5 +1,6 @@
 import { ApiError, MissingApiKeyError } from "./api.js";
 import { ApiKeyRejectedError } from "./auth.js";
+import { UnknownIngredientsError } from "./resolve.js";
 
 /**
  * One readable line for the model: what went wrong and, where it can, what
@@ -9,6 +10,9 @@ export function toolErrorMessage(err: unknown, authBaseUrl: string): string {
   const keysUrl = `${authBaseUrl.replace(/\/+$/, "")}/keys?app=cooking`;
   const newKey = `Create one at ${keysUrl}, put it in mcp-server/.env as CLANG_AUTH_API_KEY, then reconnect the server with /mcp.`;
 
+  if (err instanceof UnknownIngredientsError) {
+    return `Unknown ingredients: ${err.names.join(", ")}. Nothing was saved. Check for an existing name with search_ingredients, or, after the user confirms they're new, create them with create_ingredient and retry.`;
+  }
   if (err instanceof MissingApiKeyError) {
     return `No API key configured. ${newKey}`;
   }
